@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>schwwaaa — archive terminal</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
+<style>
+/* ============ tokens ============ */
+:root {
+  --ink: #050607;
+  --ink-2: #0b0c0e;
+  --bone: #e9e4d4;
+  --dim: rgba(233, 228, 212, 0.55);
+  --faint: rgba(233, 228, 212, 0.12);
+  --amber: #e8c15a;
+  --ice: #9fe8ff;
+  --mono: 'Lucida Console', Monaco, 'Courier New', monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(--mono); }
+body { min-height: 100vh; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+a { color: var(--bone); text-decoration: none; }
+
+/* a faint room light and vignette, the whole page feels like a dim room */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse at 50% 35%, rgba(233, 228, 212, 0.05), transparent 60%),
+              radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.85));
+}
+
+main { position: relative; z-index: 1; max-width: 1040px; margin: 0 auto; padding: 36px 20px 60px; }
+
+/* ============ boot ============ */
+#boot {
+  position: fixed; inset: 0; z-index: 50; background: var(--ink);
+  display: flex; align-items: flex-start; justify-content: flex-start; padding: 40px;
+  transition: opacity 0.9s ease, visibility 0.9s;
+}
+#boot.done { opacity: 0; visibility: hidden; }
+#boot pre {
+  margin: 0; font-size: 13px; line-height: 1.7; color: var(--dim); white-space: pre-wrap; max-width: 680px;
+}
+#boot .ok { color: var(--ice); }
+#boot .cursor { display: inline-block; width: 8px; height: 14px; background: var(--amber); vertical-align: -2px; animation: blink 0.9s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ============ masthead ============ */
+.top { text-align: center; margin-bottom: 26px; opacity: 0; transition: opacity 1.2s ease 0.2s; }
+.booted .top { opacity: 1; }
+.top img { width: min(300px, 62vw); height: auto; display: block; margin: 0 auto; filter: invert(1); }
+.top .tagline { margin: 6px 0 0; font-size: 12px; color: var(--dim); letter-spacing: 0.04em; }
+
+/* ============ room: the stage ============ */
+.room { display: flex; gap: 18px; justify-content: center; align-items: flex-start; }
+.screen {
+  flex: 1 1 auto; min-width: 0; max-width: 760px;
+  opacity: 0; transform: translateY(8px); transition: opacity 1.4s ease, transform 1.4s ease;
+}
+.booted .screen { opacity: 1; transform: none; }
+
+.label {
+  display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--dim); padding: 0 2px 8px;
+}
+#signal { color: var(--ice); }
+#signal.off { color: var(--dim); }
+
+/* the glass: microfiche glow, scanlines, a slow flicker */
+.glass {
+  position: relative; aspect-ratio: 16 / 9; background: #000; overflow: hidden;
+  border: 1px solid var(--faint); border-radius: 4px;
+  box-shadow: 0 0 0 6px #0c0d0f, 0 0 0 7px var(--faint), 0 40px 80px -40px rgba(0, 0, 0, 0.95);
+}
+.glass video {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000;
+  opacity: 0; transition: opacity 1.8s ease, filter 0.4s ease;
+}
+.glass.on-air video { opacity: 1; }
+.glass::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 3;
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 3px);
+  mix-blend-mode: screen;
+}
+.glass::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 4;
+  background: radial-gradient(ellipse at center, transparent 58%, rgba(0, 0, 0, 0.7) 100%);
+}
+.glass.flicker video { animation: flicker 6s steps(1) infinite; }
+.glass::after { opacity: 0.35; }
+.glass.scanned::after { opacity: 1; }
+@keyframes flicker { 0%, 92%, 100% { filter: none; } 93% { filter: brightness(0.9); } 95% { filter: brightness(1.04); } }
+
+/* no signal card, shown when the stream is off */
+.nosignal {
+  position: absolute; inset: 0; z-index: 2; display: none; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center; padding: 24px; gap: 10px;
+}
+.glass.offline .nosignal { display: flex; }
+.nosignal h2 { margin: 0; font-size: 15px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--amber); font-weight: 700; }
+.nosignal p { margin: 0; font-size: 12px; line-height: 1.6; color: var(--dim); max-width: 46ch; }
+.nosignal .grain { position: absolute; inset: 0; opacity: 0.08; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+
+/* the big juicy play button: sits on the video until the sound is on */
+.big-play {
+  position: absolute; left: 50%; top: 50%; z-index: 6; transform: translate(-50%, -50%);
+  width: 128px; height: 128px; border-radius: 50%; display: none;
+  align-items: center; justify-content: center;
+  background: radial-gradient(circle at 35% 30%, #fbe39a, var(--amber) 55%, #b5872a);
+  box-shadow: 0 0 0 10px rgba(232, 193, 90, 0.12), 0 0 60px 8px rgba(232, 193, 90, 0.35);
+  animation: float 2.8s ease-in-out infinite;
+  transition: transform 0.25s ease;
+}
+.glass.ready .big-play:not([hidden]) { display: flex; }
+.big-play[hidden] { display: none !important; }
+.big-play:hover { transform: translate(-50%, -50%) scale(1.06); }
+.big-play svg { width: 44px; height: 44px; margin-left: 10px; fill: var(--ink); }
+.big-play .ring {
+  position: absolute; inset: -10px; border-radius: 50%; border: 2px solid var(--amber); opacity: 0;
+  animation: ping 2.2s ease-out infinite;
+}
+@keyframes float { 50% { transform: translate(-50%, calc(-50% - 6px)); } }
+@keyframes ping { 0% { transform: scale(0.9); opacity: 0.8; } 100% { transform: scale(1.6); opacity: 0; } }
+/* leaving: the button pops, bursts out, and fades away */
+.big-play.leaving { animation: none; pointer-events: none; transition: transform 0.55s cubic-bezier(.2, .9, .3, 1.4), opacity 0.55s ease, filter 0.55s ease; transform: translate(-50%, -50%) scale(1.7); opacity: 0; filter: blur(6px); }
+.big-play.leaving .ring { animation: none; opacity: 0; }
+
+/* the deck: transport under the glass */
+.deck {
+  display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+}
+.deck button {
+  border: 1px solid var(--faint); padding: 8px 12px; font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--dim); transition: color 0.2s, border-color 0.2s;
+}
+.deck button:hover, .deck button.on { color: var(--amber); border-color: var(--amber); }
+.deck button:disabled { opacity: 0.35; cursor: default; }
+.deck .clock { margin-left: auto; font-size: 11px; color: var(--dim); letter-spacing: 0.1em; }
+
+/* ============ lens: the expandable playground ============ */
+.lens {
+  width: 0; flex: 0 0 auto; overflow: hidden; opacity: 0; transition: width 0.5s ease, opacity 0.5s ease;
+  background: var(--ink-2); border: 1px solid var(--faint); border-radius: 4px;
+}
+.lens.open { width: 280px; opacity: 1; }
+.lens-inner { width: 280px; padding: 16px; font-size: 11px; }
+.lens h3 { margin: 0 0 12px; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); }
+.lens .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.lens .presets button {
+  border: 1px solid var(--faint); padding: 5px 8px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
+}
+.lens .presets button.on, .lens .presets button:hover { color: var(--amber); border-color: var(--amber); }
+.lens label { display: grid; grid-template-columns: 78px 1fr 40px; align-items: center; gap: 8px; margin: 8px 0; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; font-size: 10px; }
+.lens output { text-align: right; color: var(--bone); }
+.lens input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 1px; background: var(--faint); }
+.lens input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: var(--amber); }
+.lens input[type=range]::-moz-range-thumb { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--amber); }
+.lens .row { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+.lens .row button, .lens .row label.file, .lens .toggles button {
+  border: 1px solid var(--faint); padding: 7px 10px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); cursor: pointer;
+  display: inline-flex; grid-template-columns: none; margin: 0;
+}
+.lens .row button:hover, .lens .row label.file:hover { color: var(--amber); border-color: var(--amber); }
+.lens input[type=file] { display: none; }
+.lens .note { margin-top: 12px; color: var(--dim); line-height: 1.6; font-size: 10px; }
+.lens .toggles { display: flex; gap: 6px; margin-top: 10px; }
+
+/* ============ chat: Owncast's own chat, embedded under the deck ============ */
+.chat { max-width: 760px; margin: 22px auto 0; }
+.chat .label { display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); padding: 0 2px 8px; }
+.chat iframe { width: 100%; height: 300px; border: 1px solid var(--faint); border-radius: 4px; background: var(--ink-2); }
+
+/* ============ blurb + links ============ */
+.blurb { max-width: 60ch; margin: 42px auto 0; text-align: center; font-size: 13px; line-height: 1.8; color: var(--dim); }
+.blurb strong { color: var(--bone); font-weight: 700; }
+.links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px; margin: 26px 0 0; font-size: 12px; letter-spacing: 0.08em; }
+.links a { color: var(--dim); border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
+.links a::before { content: '> '; color: var(--ice); }
+.links a:hover { color: var(--amber); border-bottom-color: var(--amber); }
+
+/* ============ programming: the tv guide ============ */
+.guide { margin-top: 56px; border-top: 1px solid var(--faint); padding-top: 22px; }
+.guide h3 { margin: 0 0 14px; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber); display: flex; justify-content: space-between; }
+.guide h3 span { color: var(--dim); }
+.guide table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.guide td { padding: 10px 6px; border-bottom: 1px solid var(--faint); vertical-align: top; }
+.guide td.when { width: 170px; color: var(--dim); white-space: nowrap; }
+.guide td.title strong { font-weight: 700; }
+.guide td.title small { display: block; color: var(--dim); margin-top: 3px; line-height: 1.5; }
+.guide td.state { width: 90px; text-align: right; font-size: 10px; letter-spacing: 0.14em; color: var(--dim); text-transform: uppercase; }
+.guide tr.now td.state { color: var(--amber); }
+.guide tr.now td.title strong { color: var(--amber); }
+.guide .empty { color: var(--dim); padding: 14px 0; }
+
+footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 0.16em; color: var(--dim); text-transform: uppercase; }
+
+/* ============ small screens ============ */
+@media (max-width: 760px) {
+  .room { flex-direction: column; }
+  .lens.open { width: 100%; }
+  .lens-inner { width: 100%; }
+  .big-play { width: 96px; height: 96px; }
+  .big-play svg { width: 34px; height: 34px; }
+  .guide td.when { width: auto; white-space: normal; }
+  .guide td.state { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- boot sequence: a terminal waking up -->
+<div id="boot" aria-hidden="true"><pre id="bootText"></pre></div>
+
+<main id="main">
+  <header class="top">
+    <img src="https://schwwaaa.net/img/schwwaaa-trans.png" alt="schwwaaa">
+    <p class="tagline">𝒮𝒽𝒶𝓅𝒾𝓃𝑔 𝓉𝑜𝓂𝑜𝓇𝓇𝑜𝓌 ... 𝓉𝑜𝒹𝒶𝓎</p>
+  </header>
+
+  <section class="room">
+    <div class="screen">
+      <div class="label">
+        <span id="feedName">FEED 01 — SCHWWAAA LIVE</span>
+        <span id="signal" class="off">SEARCHING</span>
+      </div>
+
+      <div class="glass flicker" id="glass">
+        <video id="video" playsinline muted></video>
+
+        <div class="nosignal">
+          <div class="grain"></div>
+          <h2>No signal</h2>
+          <p>The feed is dark right now. The next broadcast is listed in the programming guide below.</p>
+        </div>
+
+        <button class="big-play" id="bigPlay" aria-label="Play with sound">
+          <span class="ring"></span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg>
+        </button>
+      </div>
+
+      <div class="deck">
+        <button id="btnPause" disabled>Pause</button>
+        <button id="btnMute" disabled>Sound off</button>
+        <button id="btnLens" aria-expanded="false" aria-controls="lens">+ Lens</button>
+        <button id="btnFull" disabled>Fullscreen</button>
+        <span class="clock" id="clock"></span>
+      </div>
+    </div>
+
+    <aside class="lens" id="lens" aria-label="Lens controls">
+      <div class="lens-inner">
+        <h3>Lens</h3>
+        <div class="presets" id="presets"></div>
+
+        <label>Contrast <input type="range" data-k="contrast" min="0.5" max="2" step="0.01"><output></output></label>
+        <label>Saturate <input type="range" data-k="saturate" min="0" max="2" step="0.01"><output></output></label>
+        <label>Brightness <input type="range" data-k="brightness" min="0.5" max="1.5" step="0.01"><output></output></label>
+        <label>Hue <input type="range" data-k="hue" min="0" max="360" step="1"><output></output></label>
+        <label>Sepia <input type="range" data-k="sepia" min="0" max="1" step="0.01"><output></output></label>
+        <label>Grayscale <input type="range" data-k="grayscale" min="0" max="1" step="0.01"><output></output></label>
+        <label>Blur <input type="range" data-k="blur" min="0" max="8" step="0.1"><output></output></label>
+        <label>Low-pass <input type="range" data-k="lowpass" min="200" max="20000" step="10"><output></output></label>
+        <label>Bass <input type="range" data-k="bass" min="-12" max="12" step="0.5"><output></output></label>
+        <label>Treble <input type="range" data-k="treble" min="-12" max="12" step="0.5"><output></output></label>
+        <label>Pan <input type="range" data-k="pan" min="-1" max="1" step="0.01"><output></output></label>
+
+        <div class="toggles">
+          <button id="togInvert">Invert</button>
+          <button id="togScan">Scan</button>
+        </div>
+
+        <div class="row">
+          <button id="btnReset">Reset</button>
+          <button id="btnExport">Export JSON</button>
+          <label class="file" for="fileImport">Import JSON</label>
+          <input type="file" id="fileImport" accept="application/json,.json">
+        </div>
+        <p class="note">A lens is a small JSON file of your settings. Export one, send it to someone, and they can import it to see the same room through your eyes.</p>
+      </div>
+    </aside>
+  </section>
+
+  <section class="chat" aria-label="Live chat">
+    <div class="label"><span>Chat</span><span>live</span></div>
+    <iframe id="chatFrame" title="Live chat" src="about:blank" loading="lazy"></iframe>
+  </section>
+
+  <p class="blurb">
+    <strong>Schwwaaa</strong> is a global media production company founded in 2015. We make original programming, showcases and special events, streamed from this room first.
+  </p>
+
+  <nav class="links" aria-label="Links">
+    <a href="https://software.schwwaaa.net" target="_blank" rel="noopener">software</a>
+    <a href="https://live.schwwaaa.net" target="_blank" rel="noopener">live</a>
+    <a href="https://www.youtube.com/@schwwaaa" target="_blank" rel="noopener">youtube</a>
+    <a href="https://www.instagram.com/schwwaaa" target="_blank" rel="noopener">instagram</a>
+    <a href="https://twitter.com/schwwaaa" target="_blank" rel="noopener">twitter</a>
+    <a href="https://schwwaaa.net/archive.html">archive</a>
+  </nav>
+
+  <section class="guide" aria-label="Programming guide">
+    <h3>Programming <span id="guideNote">guide</span></h3>
+    <table><tbody id="guideBody"></tbody></table>
+  </section>
+
+  <footer>schwwaaa — shaping tomorrow ... today</footer>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============ config: edit these ============ */
+  var CONFIG = {
+    stream: 'https://stream.schwwaaa.net/hls/stream.m3u8',
+    chat: 'https://stream.schwwaaa.net/embed/chat/readwrite/',
+    feedName: 'FEED 01 — SCHWWAAA LIVE',
+    recheckMs: 30000,
+    bootMs: 2600
+  };
+
+  // Programming guide. Times are ISO with an offset. Placeholder entries: replace with the real schedule.
+  var GUIDE = [
+    { start: '2026-11-06T21:00:00-05:00', end: '2026-11-06T22:00:00-05:00', title: 'Core Ethos', note: 'Staff orientation cut. Open to members.' },
+    { start: '2026-11-08T20:00:00-05:00', end: '2026-11-08T21:30:00-05:00', title: 'Schwwaaa Presents', note: 'Special event. Details soon.' },
+    { start: '2026-11-13T21:00:00-05:00', end: '2026-11-13T22:00:00-05:00', title: 'Productions, live', note: 'Original programming.' }
+  ];
+
+  /* ============ lens: state, presets, export/import ============ */
+  var LENS_DEFAULT = { name: 'clear', contrast: 1, saturate: 1, brightness: 1, hue: 0, sepia: 0, grayscale: 0, invert: false, blur: 0, lowpass: 20000, bass: 0, treble: 0, pan: 0, scan: false };
+  var PRESETS = {
+    clear: {},
+    microfiche: { contrast: 1.35, saturate: 0, brightness: 0.95, sepia: 0.55, blur: 0.4, scan: true },
+    nightshift: { hue: 190, saturate: 0.6, brightness: 0.9, contrast: 1.1 },
+    cassette: { sepia: 0.3, blur: 0.8, lowpass: 3200, bass: 4, treble: -4, saturate: 0.85 }
+  };
+  var lens = clone(LENS_DEFAULT);
+  var LENS_KEYS = Object.keys(LENS_DEFAULT);
+
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+  function applyPreset(name) {
+    lens = Object.assign(clone(LENS_DEFAULT), PRESETS[name] || {}, { name: name });
+    syncLensUI();
+    applyAll();
+  }
+
+  function exportLens() {
+    var data = { schwwaaa_lens: 1, name: lens.name };
+    LENS_KEYS.forEach(function (k) { if (k !== 'name') data[k] = lens[k]; });
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'schwwaaa-lens-' + (lens.name || 'custom') + '.json';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  function importLens(text) {
+    var data;
+    try { data = JSON.parse(text); } catch (e) { alert('That file is not a lens.'); return; }
+    if (!data || data.schwwaaa_lens !== 1) { alert('That file is not a lens.'); return; }
+    var next = clone(LENS_DEFAULT);
+    LENS_KEYS.forEach(function (k) { if (k in data) next[k] = data[k]; });
+    lens = next;
+    syncLensUI();
+    applyAll();
+  }
+
+  /* ============ UI: build the lens controls from the data ============ */
+  var presetWrap = document.getElementById('presets');
+  Object.keys(PRESETS).forEach(function (name) {
+    var b = document.createElement('button');
+    b.textContent = name;
+    b.dataset.preset = name;
+    b.addEventListener('click', function () { applyPreset(name); });
+    presetWrap.appendChild(b);
+  });
+
+  var inputs = Array.prototype.slice.call(document.querySelectorAll('.lens input[type=range]'));
+  inputs.forEach(function (input) {
+    input.addEventListener('input', function () {
+      lens[input.dataset.k] = parseFloat(input.value);
+      lens.name = 'custom';
+      syncLensUI();
+      applyAll();
+    });
+  });
+
+  function syncLensUI() {
+    inputs.forEach(function (input) {
+      input.value = lens[input.dataset.k];
+      input.nextElementSibling.textContent = Number(lens[input.dataset.k]).toFixed(input.step < 1 ? 2 : 0);
+    });
+    document.querySelectorAll('#presets button').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.preset === lens.name);
+    });
+    document.getElementById('togInvert').classList.toggle('on', lens.invert);
+    document.getElementById('togScan').classList.toggle('on', lens.scan);
+  }
+
+  document.getElementById('togInvert').addEventListener('click', function () { lens.invert = !lens.invert; lens.name = 'custom'; syncLensUI(); applyAll(); });
+  document.getElementById('togScan').addEventListener('click', function () { lens.scan = !lens.scan; lens.name = 'custom'; syncLensUI(); applyAll(); });
+  document.getElementById('btnReset').addEventListener('click', function () { applyPreset('clear'); });
+  document.getElementById('btnExport').addEventListener('click', exportLens);
+  document.getElementById('fileImport').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () { importLens(reader.result); };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  /* ============ apply the lens to the picture and the sound ============ */
+  var video = document.getElementById('video');
+  var glass = document.getElementById('glass');
+
+  function applyAll() {
+    video.style.filter = [
+      'contrast(' + lens.contrast + ')',
+      'saturate(' + lens.saturate + ')',
+      'brightness(' + lens.brightness + ')',
+      'invert(' + (lens.invert ? 1 : 0) + ')',
+      'grayscale(' + lens.grayscale + ')',
+      'sepia(' + lens.sepia + ')',
+      'hue-rotate(' + lens.hue + 'deg)',
+      'blur(' + lens.blur + 'px)'
+    ].join(' ');
+    glass.classList.toggle('scanned', !!lens.scan);
+    applyAudio();
+  }
+
+  // Audio: built lazily, after the first tap, because browsers want a gesture first.
+  var audio = null;
+  function ensureAudio() {
+    if (audio) return;
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      var ctx = new Ctx();
+      var src = ctx.createMediaElementSource(video);
+      var low = ctx.createBiquadFilter(); low.type = 'lowpass';
+      var bass = ctx.createBiquadFilter(); bass.type = 'lowshelf'; bass.frequency.value = 200;
+      var treble = ctx.createBiquadFilter(); treble.type = 'highshelf'; treble.frequency.value = 4000;
+      var pan = ctx.createStereoPanner();
+      src.connect(low).connect(bass).connect(treble).connect(pan).connect(ctx.destination);
+      audio = { ctx: ctx, low: low, bass: bass, treble: treble, pan: pan };
+      applyAudio();
+    } catch (err) {
+      console.warn('Lens audio unavailable:', err);
+    }
+  }
+
+  function applyAudio() {
+    if (!audio) return;
+    var t = audio.ctx.currentTime;
+    audio.low.frequency.setValueAtTime(lens.lowpass, t);
+    audio.bass.gain.setValueAtTime(lens.bass, t);
+    audio.treble.gain.setValueAtTime(lens.treble, t);
+    audio.pan.pan.setValueAtTime(lens.pan, t);
+  }
+
+  /* ============ the lens drawer: expandable, beside the stage ============ */
+  var lensPanel = document.getElementById('lens');
+  var btnLens = document.getElementById('btnLens');
+  btnLens.addEventListener('click', function () {
+    var open = !lensPanel.classList.contains('open');
+    lensPanel.classList.toggle('open', open);
+    btnLens.setAttribute('aria-expanded', String(open));
+    btnLens.textContent = open ? '- Lens' : '+ Lens';
+  });
+
+  /* ============ the deck: pause, sound, fullscreen, clock ============ */
+  var btnPause = document.getElementById('btnPause');
+  var btnMute = document.getElementById('btnMute');
+  var btnFull = document.getElementById('btnFull');
+
+  btnPause.addEventListener('click', function () {
+    if (video.paused) { video.play(); } else { video.pause(); }
+  });
+  btnMute.addEventListener('click', function () {
+    ensureAudio();
+    video.muted = !video.muted;
+    syncSound();
+  });
+  btnFull.addEventListener('click', function () {
+    if (document.fullscreenElement) { document.exitFullscreen(); } else { glass.requestFullscreen && glass.requestFullscreen(); }
+  });
+
+  function syncSound() {
+    btnMute.textContent = video.muted ? 'Sound off' : 'Sound on';
+    btnPause.textContent = video.paused ? 'Play' : 'Pause';
+  }
+  video.addEventListener('play', syncSound);
+  video.addEventListener('pause', syncSound);
+  video.addEventListener('volumechange', syncSound);
+
+  setInterval(function () {
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }, 1000);
+
+  /* ============ the big play button: unmute, then the button leaves ============ */
+  var bigPlay = document.getElementById('bigPlay');
+  var soundOn = false;
+  bigPlay.addEventListener('click', function () {
+    ensureAudio();
+    if (audio && audio.ctx.state === 'suspended') audio.ctx.resume();
+    soundOn = true;
+    video.muted = false;
+    video.play();
+    bigPlay.classList.add('leaving');
+    setTimeout(function () {
+      bigPlay.hidden = true;
+      bigPlay.classList.remove('leaving');
+      glass.classList.remove('ready');
+    }, 650);
+    syncSound();
+  });
+
+  /* ============ the stream: muted on arrival, offline when the feed is dark ============ */
+  var hls = null;
+  var signal = document.getElementById('signal');
+  var recheck = null;
+
+  function setState(state) {
+    // state: 'searching' | 'live' | 'offline'
+    glass.classList.toggle('offline', state === 'offline');
+    signal.textContent = state === 'live' ? 'LIVE' : state === 'offline' ? 'OFFLINE' : 'SEARCHING';
+    signal.classList.toggle('off', state !== 'live');
+    [btnPause, btnMute, btnFull].forEach(function (b) { b.disabled = state !== 'live'; });
+    renderGuide(state);
+  }
+
+  var isLive = false;
+
+  function onLive() {
+    if (isLive) return;
+    isLive = true;
+    setState('live');
+    if (!soundOn) glass.classList.add('ready');
+    // start muted and silent; the big button brings the sound
+    video.muted = !soundOn;
+    video.play().then(function () {
+      glass.classList.add('on-air');
+      syncSound();
+    }).catch(function () {
+      glass.classList.add('on-air');
+    });
+  }
+
+  function onOffline() {
+    isLive = false;
+    if (hls) { hls.destroy(); hls = null; }
+    glass.classList.remove('ready', 'on-air');
+    setState('offline');
+    clearTimeout(recheck);
+    recheck = setTimeout(connect, CONFIG.recheckMs);
+  }
+
+  function connect() {
+    clearTimeout(recheck);
+    if (hls) { hls.destroy(); hls = null; }
+    if (window.Hls && Hls.isSupported()) {
+      hls = new Hls({ lowLatencyMode: true });
+      hls.loadSource(CONFIG.stream);
+      hls.attachMedia(video);
+      // While dark, Owncast serves an ended "stream-offline" slate (the playlist has ENDLIST),
+      // so a live playlist, with no ENDLIST, is the real signal.
+      hls.on(Hls.Events.LEVEL_LOADED, function (e, data) {
+        if (data.details.live) onLive(); else onOffline();
+      });
+      hls.on(Hls.Events.ERROR, function (e, data) {
+        if (data.fatal) onOffline();
+      });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = CONFIG.stream;
+      video.addEventListener('loadeddata', onLive, { once: true });
+      video.addEventListener('error', onOffline, { once: true });
+    } else {
+      setState('offline');
+    }
+  }
+
+  /* ============ the programming guide ============ */
+  function renderGuide(state) {
+    var body = document.getElementById('guideBody');
+    var note = document.getElementById('guideNote');
+    var now = Date.now();
+    var rows = GUIDE.map(function (item) {
+      var s = Date.parse(item.start), e = Date.parse(item.end);
+      var status = now >= s && now < e ? 'now' : now < s ? 'next' : 'past';
+      return { item: item, s: s, e: e, status: status };
+    }).filter(function (r) { return r.status !== 'past'; }).sort(function (a, b) { return a.s - b.s; });
+
+    if (state === 'live') note.textContent = 'live now';
+    else note.textContent = rows.length ? 'upcoming' : 'nothing scheduled';
+
+    if (!rows.length) {
+      body.innerHTML = '<tr><td class="empty" colspan="3">Nothing on the schedule yet. Check back soon.</td></tr>';
+      return;
+    }
+    body.innerHTML = rows.map(function (r) {
+      var stateLabel = state === 'live' && r.status === 'now' ? 'on air' : r.status === 'now' ? 'starting' : 'next';
+      return '<tr class="' + (r.status === 'now' ? 'now' : '') + '">' +
+        '<td class="when">' + formatWhen(r.s) + '</td>' +
+        '<td class="title"><strong>' + escapeHtml(r.item.title) + '</strong><small>' + escapeHtml(r.item.note || '') + '</small></td>' +
+        '<td class="state">' + stateLabel + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function formatWhen(ms) {
+    var d = new Date(ms);
+    return d.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  /* ============ boot: the terminal wakes up, then the room fades in ============ */
+  var BOOT_LINES = [
+    'SCHWWAAA ARCHIVE TERMINAL  v0.3',
+    'mounting footage ............ <span class="ok">ok</span>',
+    'calibrating phosphor ........ <span class="ok">ok</span>',
+    'lens bank ................... <span class="ok">ready</span>',
+    'programming guide ........... <span class="ok">loaded</span>',
+    'searching for signal ........ ',
+    ''
+  ];
+
+  function runBoot(done) {
+    var out = document.getElementById('bootText');
+    var i = 0;
+    function next() {
+      if (i >= BOOT_LINES.length) {
+        out.innerHTML += '<span class="cursor"></span>';
+        setTimeout(done, 450);
+        return;
+      }
+      out.innerHTML += BOOT_LINES[i] + '\n';
+      i++;
+      setTimeout(next, 280);
+    }
+    next();
+  }
+
+  function init() {
+    syncLensUI();
+    applyAll();
+    document.getElementById('feedName').textContent = CONFIG.feedName;
+    document.getElementById('chatFrame').src = CONFIG.chat;
+    renderGuide('offline');
+    connect();
+  }
+
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) {
+    document.getElementById('boot').classList.add('done');
+    document.body.classList.add('booted');
+    init();
+  } else {
+    runBoot(function () {
+      document.getElementById('boot').classList.add('done');
+      document.body.classList.add('booted');
+      init();
+    });
+  }
+})();
+</script>
+</body>
+</html>
