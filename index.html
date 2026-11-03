@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>schwwaaa — archive terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
 <style>
 /* ============ tokens ============ */
@@ -11,17 +14,20 @@
   --ink: #050607;
   --ink-2: #0b0c0e;
   --ink-3: #111316;
-  --bone: #e9e4d4;
-  --dim: rgba(233, 228, 212, 0.6);
-  --faint: rgba(233, 228, 212, 0.12);
+  --bone: #ebe7dc;
+  --dim: rgba(235, 231, 220, 0.6);
+  --faint: rgba(235, 231, 220, 0.12);
   --ice: #9fe8ff;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'Lucida Console', Monaco, 'Courier New', monospace;
+  --crop: 54px;
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(--mono); }
+html, body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(--sans); }
 body { min-height: 100vh; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+button, input, select { font: inherit; color: inherit; }
+button { background: none; border: 0; cursor: pointer; }
 button:disabled { opacity: 0.35; cursor: default; }
 a { color: var(--bone); text-decoration: none; }
 [hidden] { display: none !important; }
@@ -29,11 +35,11 @@ a { color: var(--bone); text-decoration: none; }
 /* a faint room light and vignette */
 body::before {
   content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background: radial-gradient(ellipse at 50% 35%, rgba(233, 228, 212, 0.05), transparent 60%),
-              radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.85));
+  background: radial-gradient(ellipse at 50% 30%, rgba(235, 231, 220, 0.045), transparent 60%),
+              radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.8));
 }
 
-main { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 36px 20px 60px; }
+main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; padding: 36px 24px 60px; }
 
 /* ============ boot ============ */
 #boot {
@@ -42,34 +48,41 @@ main { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; paddin
   transition: opacity 0.9s ease, visibility 0.9s;
 }
 #boot.done { opacity: 0; visibility: hidden; }
-#boot pre { margin: 0; font-size: 13px; line-height: 1.7; color: var(--dim); white-space: pre-wrap; max-width: 680px; }
+#boot pre { margin: 0; font: 13px/1.7 var(--mono); color: var(--dim); white-space: pre-wrap; max-width: 680px; }
 #boot .ok { color: var(--ice); }
 #boot .cursor { display: inline-block; width: 8px; height: 14px; background: var(--ice); vertical-align: -2px; animation: blink 0.9s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
 
 /* ============ masthead + the ? ============ */
-.masthead { text-align: center; margin-bottom: 26px; opacity: 0; transition: opacity 1.2s ease 0.2s; position: relative; }
+.masthead { text-align: center; margin-bottom: 26px; opacity: 0; transition: opacity 1.2s ease 0.2s; }
 .booted .masthead { opacity: 1; }
 .masthead img { width: min(300px, 62vw); height: auto; display: block; margin: 0 auto; filter: invert(1); }
-.masthead .tagline { margin: 6px 0 0; font-size: 12px; color: var(--dim); letter-spacing: 0.04em; }
+.masthead .tagline { margin: 6px 0 0; font: 12px var(--mono); color: var(--dim); letter-spacing: 0.04em; }
+
 .help {
-  position: fixed; top: 16px; right: 16px; z-index: 20; width: 36px; height: 36px;
-  border: 1px solid var(--faint); color: var(--dim); font-size: 15px; letter-spacing: 0;
-  transition: color 0.2s, border-color 0.2s;
+  position: fixed; top: 16px; right: 16px; z-index: 20; width: 38px; height: 38px; border-radius: 50%;
+  border: 1px solid var(--faint); color: var(--dim); font-size: 15px; font-weight: 500;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 .help:hover, .help[aria-expanded='true'] { color: var(--ice); border-color: var(--ice); }
+/* a slow, subtle breath until someone has clicked it */
+.help.pulse { animation: breathe 3.6s ease-in-out infinite; }
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(159, 232, 255, 0); border-color: var(--faint); }
+  50% { box-shadow: 0 0 0 7px rgba(159, 232, 255, 0.08); border-color: rgba(159, 232, 255, 0.45); }
+}
 
 /* ============ room ============ */
 .room { display: flex; gap: 18px; justify-content: center; align-items: flex-start; }
 .screen {
-  flex: 1 1 auto; min-width: 0; max-width: 760px;
+  flex: 1 1 auto; min-width: 0; max-width: 940px;
   opacity: 0; transform: translateY(8px); transition: opacity 1.4s ease, transform 1.4s ease;
 }
 .booted .screen { opacity: 1; transform: none; }
 
 .label {
   display: flex; justify-content: space-between; align-items: center; gap: 10px;
-  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); padding: 0 2px 8px;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); padding: 0 2px 9px;
 }
 #signal { color: var(--ice); }
 #signal.off { color: var(--dim); }
@@ -77,32 +90,40 @@ main { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; paddin
 /* the glass */
 .glass {
   position: relative; aspect-ratio: 16 / 9; background: #000; overflow: hidden;
-  border: 1px solid var(--faint); border-radius: 4px;
-  box-shadow: 0 0 0 6px #0c0d0f, 0 0 0 7px var(--faint), 0 40px 80px -40px rgba(0, 0, 0, 0.95);
+  border: 1px solid var(--faint); border-radius: 6px;
+  box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.95);
 }
 .glass video {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000;
   opacity: 0; transition: opacity 1.8s ease;
 }
 .glass.on-air video { opacity: 1; }
-/* scanlines: off by default, the Scan toggle turns them on */
-.glass::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 3; opacity: 0;
+/* effects layers: all sit above the picture and never block it */
+.fx { position: absolute; inset: 0; pointer-events: none; }
+.fx-scan {
+  z-index: 3; opacity: 0; mix-blend-mode: screen;
   background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 3px);
-  mix-blend-mode: screen;
 }
-.glass.scanned::after { opacity: 1; }
-/* vignette, flickering on its own layer so the video's filter is never touched */
-.glass::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 4;
-  background: radial-gradient(ellipse at center, transparent 58%, rgba(0, 0, 0, 0.7) 100%);
+.glass.scanned .fx-scan { opacity: 1; }
+.fx-grain {
+  z-index: 3; opacity: 0; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
-.glass.flicker::before { animation: flicker 6s steps(1) infinite; }
-@keyframes flicker { 0%, 92%, 100% { opacity: 1; } 93% { opacity: 0.8; } 95% { opacity: 1; } }
+.fx-vig {
+  z-index: 4; opacity: 0;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.9) 100%);
+}
+.fx-flick { z-index: 4; background: #000; opacity: 0; }
+.glass.flicker .fx-flick { animation: flicker 6s steps(1) infinite; }
+@keyframes flicker { 0%, 92%, 100% { opacity: 0; } 93% { opacity: 0.08; } 95% { opacity: 0; } }
 
-/* paint: a canvas over the picture, only live while the Paint pane is on */
-.paint { position: absolute; inset: 0; z-index: 5; width: 100%; height: 100%; display: none; cursor: crosshair; }
-.paint.active { display: block; }
+/* paint: a canvas over the picture, live only while the Paint tab is open */
+.paint { position: absolute; inset: 0; z-index: 5; width: 100%; height: 100%; display: none; touch-action: none; }
+.paint.active { display: block; cursor: crosshair; }
+.paint-text {
+  position: absolute; z-index: 7; background: rgba(5, 6, 7, 0.55); border: 1px dashed var(--ice); outline: 0;
+  padding: 2px 4px; min-width: 120px; font-family: var(--sans); font-weight: 500;
+}
 
 /* no signal card */
 .nosignal {
@@ -110,16 +131,16 @@ main { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; paddin
   align-items: center; justify-content: center; text-align: center; padding: 24px; gap: 10px;
 }
 .glass.offline .nosignal { display: flex; }
-.nosignal h2 { margin: 0; font-size: 15px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ice); font-weight: 700; }
-.nosignal p { margin: 0; font-size: 12px; line-height: 1.6; color: var(--dim); max-width: 46ch; }
+.nosignal h2 { margin: 0; font-size: 14px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--ice); font-weight: 600; }
+.nosignal p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--dim); max-width: 44ch; }
 
 /* the launch button: a machined key with a status LED and a light sweep */
 .big-play {
   position: absolute; left: 50%; top: 50%; z-index: 6; transform: translate(-50%, -50%);
   display: none; align-items: center; gap: 14px; height: 60px; padding: 0 30px 0 22px;
   background: linear-gradient(180deg, #1b2226, #0a0d0f);
-  border: 1px solid rgba(159, 232, 255, 0.4); border-radius: 4px; overflow: hidden;
-  color: var(--bone); font-size: 13px; letter-spacing: 0.24em; text-transform: uppercase; white-space: nowrap;
+  border: 1px solid rgba(159, 232, 255, 0.4); border-radius: 6px; overflow: hidden;
+  color: var(--bone); font-size: 13px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), inset 0 -2px 0 rgba(0, 0, 0, 0.7), 0 18px 40px rgba(0, 0, 0, 0.7);
   transition: transform 0.12s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
@@ -135,93 +156,124 @@ main { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; paddin
 .big-play .led { width: 8px; height: 8px; border-radius: 50%; background: var(--ice); box-shadow: 0 0 10px var(--ice); animation: led 1.6s ease-in-out infinite; }
 .big-play svg { width: 14px; height: 14px; fill: var(--ice); flex: none; }
 @keyframes led { 50% { opacity: 0.35; } }
-/* leaving: it presses in, brightens, and dissolves */
 .big-play.leaving { animation: none; pointer-events: none; transition: transform 0.5s ease-out, opacity 0.5s ease, filter 0.5s ease; transform: translate(-50%, -50%) scale(1.15); opacity: 0; filter: blur(6px); }
 .big-play.leaving .led { animation: none; }
 
 /* the deck */
 .deck { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .deck button {
-  border: 1px solid var(--faint); padding: 8px 12px; font-size: 11px; letter-spacing: 0.14em;
-  text-transform: uppercase; color: var(--dim); transition: color 0.2s, border-color 0.2s;
+  border: 1px solid var(--faint); padding: 8px 13px; font-size: 11px; font-weight: 500; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--dim); border-radius: 4px; transition: color 0.2s, border-color 0.2s;
 }
 .deck button:hover:not(:disabled), .deck button.on { color: var(--ice); border-color: var(--ice); }
-.deck .clock { margin-left: auto; font-size: 11px; color: var(--dim); letter-spacing: 0.1em; }
+.deck .clock { margin-left: auto; font-size: 11px; color: var(--dim); letter-spacing: 0.08em; font-variant-numeric: tabular-nums; }
 
-/* chat, placed below the deck when it's moved there */
-.chat-below { margin-top: 18px; }
-.chat-below .label button { border: 1px solid var(--faint); padding: 5px 9px; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
-.chat-below .label button:hover { color: var(--ice); border-color: var(--ice); }
-.chat-below .label .actions { display: flex; gap: 6px; }
-.chat-slot { height: 100%; }
-.chat-slot iframe { width: 100%; height: 100%; border: 0; display: block; background: var(--ink-2); }
-.chat-below .chat-slot { height: 520px; border: 1px solid var(--faint); border-radius: 4px; overflow: hidden; }
-.pane[data-pane=chat] .chat-slot { height: 420px; }
-
-/* the about: blurb and links, under the deck, shown by the ? */
-.about { margin-top: 18px; border-top: 1px solid var(--faint); padding-top: 18px; }
-.blurb { max-width: 74ch; margin: 0 auto; text-align: center; font-size: 14px; line-height: 1.8; color: var(--dim); }
-.blurb strong { color: var(--bone); font-weight: 700; }
-.links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px; margin: 18px 0 0; font-size: 12px; letter-spacing: 0.08em; }
+/* the static about: blurb and links, directly under the deck */
+.about { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--faint); text-align: center; }
+.blurb { max-width: 80ch; margin: 0 auto; font-size: 15px; line-height: 1.75; color: var(--dim); font-weight: 300; }
+.blurb strong { color: var(--bone); font-weight: 500; }
+.blurb .beats { display: block; margin-top: 8px; color: var(--bone); font-weight: 500; letter-spacing: 0.02em; }
+.links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 26px; margin: 18px 0 0; font-size: 13px; }
 .links a { color: var(--dim); border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
-.links a::before { content: '> '; color: var(--ice); }
 .links a:hover { color: var(--ice); border-bottom-color: var(--ice); }
+
+/* chat below: under the blurb and links; the header of the embed is cropped away */
+.chat-below { margin-top: 22px; }
+.chat-slot { position: relative; overflow: hidden; height: 100%; }
+.chat-slot iframe { position: absolute; left: 0; top: calc(var(--crop) * -1); width: 100%; height: calc(100% + var(--crop)); border: 0; display: block; background: var(--ink-2); }
+.chat-below .chat-slot { height: 520px; border: 1px solid var(--faint); border-radius: 6px; }
+.chat-below .label .actions { display: flex; gap: 6px; }
+.chat-below .label button, .pane .btn {
+  border: 1px solid var(--faint); padding: 5px 10px; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); border-radius: 4px;
+}
+.chat-below .label button:hover, .pane .btn:hover, .pane .btn.on { color: var(--ice); border-color: var(--ice); }
+.pane[data-pane=chat] .chat-slot { height: 420px; border-radius: 4px; }
 
 /* ============ drawer: lens, audio, paint, chat, beside the stage ============ */
 .drawer {
   width: 0; flex: 0 0 auto; overflow: hidden; opacity: 0;
   transition: width 0.5s ease, opacity 0.5s ease;
-  background: var(--ink-2); border: 1px solid var(--faint); border-radius: 4px;
+  background: var(--ink-2); border: 1px solid var(--faint); border-radius: 6px;
 }
-.drawer.open { width: 300px; opacity: 1; }
-.drawer-inner { width: 300px; padding: 14px; font-size: 11px; }
+.drawer.open { width: 320px; opacity: 1; }
+.drawer-inner { width: 320px; padding: 14px; font-size: 12px; }
 .tabs { display: flex; gap: 4px; margin-bottom: 14px; }
 .tabs button {
-  flex: 1 1 0; border: 1px solid var(--faint); padding: 7px 4px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
+  flex: 1 1 0; border: 1px solid var(--faint); padding: 7px 4px; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); border-radius: 4px;
 }
 .tabs button:hover, .tabs button[aria-selected='true'] { color: var(--ice); border-color: var(--ice); }
 .tabs button:disabled { opacity: 0.35; }
-.pane h3 { margin: 0 0 10px; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ice); }
-.pane .note { margin: 12px 0 0; color: var(--dim); line-height: 1.6; font-size: 10px; }
+.pane h3 { margin: 0 0 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ice); }
+.pane .note { margin: 12px 0 0; color: var(--dim); line-height: 1.6; font-size: 11px; }
 
 .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.presets button { border: 1px solid var(--faint); padding: 5px 8px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+.presets button { border: 1px solid var(--faint); padding: 5px 9px; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); border-radius: 4px; }
 .presets button.on, .presets button:hover { color: var(--ice); border-color: var(--ice); }
 
-.pane label.row { display: grid; grid-template-columns: 84px 1fr 44px; align-items: center; gap: 8px; margin: 9px 0; color: var(--dim); text-transform: uppercase; letter-spacing: 0.1em; font-size: 10px; }
-.pane output { text-align: right; color: var(--bone); }
+.pane label.row { display: grid; grid-template-columns: 92px 1fr 46px; align-items: center; gap: 8px; margin: 9px 0; color: var(--dim); font-size: 11px; letter-spacing: 0.04em; }
+.pane output { text-align: right; color: var(--bone); font-variant-numeric: tabular-nums; }
 input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 1px; background: var(--faint); margin: 0; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--ice); box-shadow: 0 0 0 4px rgba(159, 232, 255, 0.12); }
 input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--ice); }
 
-.toggles { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
-.btn {
-  border: 1px solid var(--faint); padding: 7px 10px; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim);
-  display: inline-flex; align-items: center; cursor: pointer; transition: color 0.2s, border-color 0.2s;
-}
-.btn:hover, .btn.on { color: var(--ice); border-color: var(--ice); }
-.btn-row { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+.toggles, .btn-row, .tools { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; cursor: pointer; }
 .file-in { display: none; }
-.color-in { width: 30px; height: 26px; padding: 0; border: 1px solid var(--faint); background: transparent; cursor: pointer; }
+
+.tools button {
+  flex: 1 1 calc(25% - 6px); border: 1px solid var(--faint); padding: 8px 4px; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); border-radius: 4px;
+}
+.tools button:hover, .tools button.on { color: var(--ice); border-color: var(--ice); }
+
+.colorline { display: flex; align-items: center; gap: 10px; margin-top: 14px; color: var(--dim); font-size: 11px; }
+.swatch { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--faint); background: var(--ice); box-shadow: inset 0 0 0 3px var(--ink-2); cursor: pointer; }
+.swatch:hover { border-color: var(--ice); }
+
+/* the colour wheel: a popover, closes on Escape or a click anywhere else */
+.wheel {
+  position: relative; margin-top: 10px; padding: 12px; background: var(--ink-3); border: 1px solid var(--faint); border-radius: 6px;
+  display: grid; gap: 10px; justify-items: center;
+}
+.wheel canvas { width: 180px; height: 180px; cursor: crosshair; touch-action: none; }
+.wheel .row { width: 100%; display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px; color: var(--dim); font-size: 11px; }
+.wheel .hex-row { width: 100%; display: flex; gap: 8px; align-items: center; }
+.wheel input.hex { flex: 1; background: transparent; border: 1px solid var(--faint); border-radius: 4px; padding: 5px 8px; font-size: 12px; text-transform: uppercase; }
+.wheel input.hex:focus { outline: 0; border-color: var(--ice); }
+.swatches { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.swatches button { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--faint); }
+.swatches button:hover { outline: 1px solid var(--ice); outline-offset: 2px; }
 
 /* ============ programming ============ */
 .guide { margin-top: 56px; border-top: 1px solid var(--faint); padding-top: 22px; }
-.guide h3 { margin: 0 0 14px; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ice); display: flex; justify-content: space-between; }
-.guide h3 span { color: var(--dim); }
-.guide table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.guide td { padding: 10px 6px; border-bottom: 1px solid var(--faint); vertical-align: top; }
-.guide td.when { width: 170px; color: var(--dim); white-space: nowrap; }
-.guide td.title strong { font-weight: 700; }
+.guide h3 { margin: 0 0 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ice); display: flex; justify-content: space-between; }
+.guide h3 span { color: var(--dim); font-weight: 500; }
+.guide table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.guide td { padding: 11px 6px; border-bottom: 1px solid var(--faint); vertical-align: top; }
+.guide td.when { width: 180px; color: var(--dim); white-space: nowrap; }
+.guide td.title strong { font-weight: 500; }
 .guide td.title small { display: block; color: var(--dim); margin-top: 3px; line-height: 1.5; }
-.guide td.state { width: 90px; text-align: right; font-size: 10px; letter-spacing: 0.14em; color: var(--dim); text-transform: uppercase; }
+.guide td.state { width: 90px; text-align: right; font-size: 10px; font-weight: 500; letter-spacing: 0.12em; color: var(--dim); text-transform: uppercase; }
 .guide tr.now td.state { color: var(--ice); }
 .guide tr.now td.title strong { color: var(--ice); }
 .guide .empty { color: var(--dim); padding: 14px 0; }
 
 footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 0.16em; color: var(--dim); text-transform: uppercase; }
 
+/* ============ the ? modal ============ */
+.modal {
+  border: 1px solid var(--faint); border-radius: 8px; background: var(--ink-2); color: var(--bone);
+  padding: 30px 32px 26px; max-width: min(640px, 92vw); width: 100%;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+}
+.modal::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(3px); }
+.modal .close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--faint); color: var(--dim); }
+.modal .close:hover { color: var(--ice); border-color: var(--ice); }
+.modal .blurb { text-align: left; margin: 0; }
+.modal .links { justify-content: flex-start; }
+
 /* ============ small screens ============ */
-@media (max-width: 760px) {
+@media (max-width: 860px) {
+  main { padding: 28px 16px 48px; }
   .room { flex-direction: column; }
   .drawer.open { width: 100%; }
   .drawer-inner { width: 100%; }
@@ -240,7 +292,23 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
 <!-- boot sequence: a terminal waking up -->
 <div id="boot" aria-hidden="true"><pre id="bootText"></pre></div>
 
-<button class="help" id="btnHelp" aria-expanded="false" aria-controls="about" title="About schwwaaa">?</button>
+<button class="help pulse" id="btnHelp" aria-haspopup="dialog" aria-controls="aboutModal" aria-label="About schwwaaa" title="About schwwaaa">?</button>
+
+<dialog class="modal" id="aboutModal" aria-labelledby="aboutTitle">
+  <button class="close" id="btnAboutClose" aria-label="Close">×</button>
+  <h2 id="aboutTitle" class="sr-only" style="position:absolute;left:-9999px">About schwwaaa</h2>
+  <p class="blurb">
+    <strong>schwwaaa</strong> is a global media production and software development company founded in 2015 with the goal of making creating things easier for everyone.
+    <span class="beats">We build. We iterate. We inspire. We shape tomorrow. Today.</span>
+  </p>
+  <nav class="links" aria-label="Links">
+    <a href="https://software.schwwaaa.net" target="_blank" rel="noopener">software</a>
+    <a href="https://www.youtube.com/@schwwaaa" target="_blank" rel="noopener">youtube</a>
+    <a href="https://www.instagram.com/schwwaaa" target="_blank" rel="noopener">instagram</a>
+    <a href="https://twitter.com/schwwaaa" target="_blank" rel="noopener">twitter</a>
+    <a href="https://schwwaaa.net/archive.html">archive</a>
+  </nav>
+</dialog>
 
 <main>
   <header class="masthead">
@@ -257,7 +325,12 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
 
       <div class="glass flicker" id="glass">
         <video id="video" playsinline muted></video>
+        <div class="fx fx-scan"></div>
+        <div class="fx fx-grain" id="fxGrain"></div>
+        <div class="fx fx-vig" id="fxVig"></div>
+        <div class="fx fx-flick"></div>
         <canvas class="paint" id="paint" aria-label="Paint on the picture"></canvas>
+        <input class="paint-text" id="paintText" hidden aria-label="Text to place">
 
         <div class="nosignal">
           <h2>No signal</h2>
@@ -274,13 +347,27 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
       <div class="deck">
         <button id="btnPause" disabled>Pause</button>
         <button id="btnMute" disabled>Sound off</button>
-        <button data-tool="lens">Lens</button>
-        <button data-tool="audio">Audio</button>
+        <button data-tool="lens">Picture</button>
+        <button data-tool="audio">Sound</button>
         <button data-tool="paint">Paint</button>
         <button id="btnChat" disabled>Chat</button>
         <button id="btnFull" disabled>Fullscreen</button>
         <span class="clock" id="clock"></span>
       </div>
+
+      <section class="about" aria-label="About">
+        <p class="blurb">
+          <strong>schwwaaa</strong> is a global media production and software development company founded in 2015 with the goal of making creating things easier for everyone.
+          <span class="beats">We build. We iterate. We inspire. We shape tomorrow. Today.</span>
+        </p>
+        <nav class="links" aria-label="Links">
+          <a href="https://software.schwwaaa.net" target="_blank" rel="noopener">software</a>
+          <a href="https://www.youtube.com/@schwwaaa" target="_blank" rel="noopener">youtube</a>
+          <a href="https://www.instagram.com/schwwaaa" target="_blank" rel="noopener">instagram</a>
+          <a href="https://twitter.com/schwwaaa" target="_blank" rel="noopener">twitter</a>
+          <a href="https://schwwaaa.net/archive.html">archive</a>
+        </nav>
+      </section>
 
       <section class="chat-below" id="chatBelow" aria-label="Live chat" hidden>
         <div class="label">
@@ -292,44 +379,35 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
         </div>
         <div class="chat-slot" id="chatSlotBelow"></div>
       </section>
-
-      <section class="about" id="about" hidden>
-        <p class="blurb">
-          <strong>schwwaaa</strong> is a global media production and software development company founded in 2015 with the goal of making creating things easier for everyone.<br>
-          <strong>We build. We iterate. We inspire. We shape tomorrow. Today.</strong>
-        </p>
-        <nav class="links" aria-label="Links">
-          <a href="https://software.schwwaaa.net" target="_blank" rel="noopener">software</a>
-          <a href="https://www.youtube.com/@schwwaaa" target="_blank" rel="noopener">youtube</a>
-          <a href="https://www.instagram.com/schwwaaa" target="_blank" rel="noopener">instagram</a>
-          <a href="https://twitter.com/schwwaaa" target="_blank" rel="noopener">twitter</a>
-          <a href="https://schwwaaa.net/archive.html">archive</a>
-        </nav>
-      </section>
     </div>
 
     <aside class="drawer" id="drawer" aria-label="Tools">
       <div class="drawer-inner">
         <div class="tabs" role="tablist">
-          <button role="tab" data-tab="lens">Lens</button>
-          <button role="tab" data-tab="audio">Audio</button>
+          <button role="tab" data-tab="lens">Picture</button>
+          <button role="tab" data-tab="audio">Sound</button>
           <button role="tab" data-tab="paint">Paint</button>
           <button role="tab" data-tab="chat" id="tabChat">Chat</button>
         </div>
 
         <div class="pane" data-pane="lens">
-          <h3>Lens</h3>
+          <h3>Picture</h3>
           <div class="presets" id="presets"></div>
           <label class="row">Contrast <input type="range" data-k="contrast" min="0.5" max="2" step="0.01"><output></output></label>
-          <label class="row">Saturate <input type="range" data-k="saturate" min="0" max="2" step="0.01"><output></output></label>
-          <label class="row">Bright <input type="range" data-k="brightness" min="0.5" max="1.5" step="0.01"><output></output></label>
+          <label class="row">Saturation <input type="range" data-k="saturate" min="0" max="2" step="0.01"><output></output></label>
+          <label class="row">Brightness <input type="range" data-k="brightness" min="0.5" max="1.5" step="0.01"><output></output></label>
           <label class="row">Hue <input type="range" data-k="hue" min="0" max="360" step="1"><output></output></label>
           <label class="row">Sepia <input type="range" data-k="sepia" min="0" max="1" step="0.01"><output></output></label>
-          <label class="row">Grayscale <input type="range" data-k="grayscale" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row">Greyscale <input type="range" data-k="grayscale" min="0" max="1" step="0.01"><output></output></label>
           <label class="row">Blur <input type="range" data-k="blur" min="0" max="8" step="0.1"><output></output></label>
+          <label class="row">Zoom <input type="range" data-k="zoom" min="1" max="2" step="0.01"><output></output></label>
+          <label class="row">Grain <input type="range" data-k="grain" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row">Vignette <input type="range" data-k="vignette" min="0" max="1" step="0.01"><output></output></label>
           <div class="toggles">
             <button class="btn" data-toggle="invert">Invert</button>
             <button class="btn" data-toggle="scan">Scan lines</button>
+            <button class="btn" data-toggle="flipH">Flip ↔</button>
+            <button class="btn" data-toggle="flipV">Flip ↕</button>
           </div>
           <div class="btn-row">
             <button class="btn" id="btnReset">Reset</button>
@@ -337,27 +415,56 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
             <label class="btn" for="fileImport">Import JSON</label>
             <input class="file-in" type="file" id="fileImport" accept="application/json,.json">
           </div>
-          <p class="note">A lens is a small JSON file of your settings. Export one, send it to someone, and they can import it to see the room through your eyes.</p>
+          <p class="note">A lens is a small JSON file of your picture and sound settings. Export one, send it to someone, and they can import it to see the room through your eyes.</p>
         </div>
 
         <div class="pane" data-pane="audio" hidden>
-          <h3>Audio</h3>
+          <h3>Sound</h3>
           <p class="note" id="audioNote">Sound effects start when you press play.</p>
+          <label class="row">Volume <input type="range" data-k="volume" min="0" max="1.5" step="0.01"><output></output></label>
+          <label class="row">High-pass <input type="range" data-k="highpass" min="20" max="2000" step="5"><output></output></label>
           <label class="row">Low-pass <input type="range" data-k="lowpass" min="200" max="20000" step="10"><output></output></label>
           <label class="row">Bass <input type="range" data-k="bass" min="-12" max="12" step="0.5"><output></output></label>
+          <label class="row">Mid <input type="range" data-k="mid" min="-12" max="12" step="0.5"><output></output></label>
           <label class="row">Treble <input type="range" data-k="treble" min="-12" max="12" step="0.5"><output></output></label>
           <label class="row">Pan <input type="range" data-k="pan" min="-1" max="1" step="0.01"><output></output></label>
+          <label class="row">Echo <input type="range" data-k="echo" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row">Echo time <input type="range" data-k="echoTime" min="0.05" max="1" step="0.01"><output></output></label>
+          <label class="row">Drive <input type="range" data-k="drive" min="0" max="1" step="0.01"><output></output></label>
         </div>
 
         <div class="pane" data-pane="paint" hidden>
           <h3>Paint</h3>
-          <div class="toggles">
-            <button class="btn" id="btnPaintOn">Paint on</button>
-            <button class="btn" id="btnPaintClear">Clear</button>
+          <div class="tools" id="tools" role="group" aria-label="Paint tools">
+            <button data-tool-paint="brush" class="on">Brush</button>
+            <button data-tool-paint="eraser">Erase</button>
+            <button data-tool-paint="line">Line</button>
+            <button data-tool-paint="rect">Box</button>
+            <button data-tool-paint="ellipse">Oval</button>
+            <button data-tool-paint="bucket">Fill</button>
+            <button data-tool-paint="text">Text</button>
           </div>
-          <label class="row">Colour <input class="color-in" type="color" id="paintColor" value="#9fe8ff"><output></output></label>
-          <label class="row">Size <input type="range" id="paintSize" min="1" max="24" step="1" value="5"><output>5</output></label>
-          <p class="note">Draw straight onto the picture. Painting stays on the stage, so turn it off to watch uninterrupted.</p>
+          <div class="toggles">
+            <button class="btn" id="btnFillShape">Solid shapes</button>
+          </div>
+          <div class="colorline">
+            <button class="swatch" id="swatch" aria-label="Choose colour" aria-expanded="false" aria-controls="wheel"></button>
+            <span>Colour</span>
+          </div>
+          <div class="wheel" id="wheel" hidden>
+            <canvas id="wheelCanvas" width="180" height="180" aria-label="Colour wheel"></canvas>
+            <label class="row">Brightness <input type="range" id="wheelV" min="0" max="1" step="0.01"></label>
+            <div class="hex-row">
+              <input class="hex" id="wheelHex" maxlength="7" aria-label="Hex colour">
+            </div>
+            <div class="swatches" id="swatches"></div>
+          </div>
+          <label class="row">Size <input type="range" id="paintSize" min="1" max="40" step="1" value="6"><output>6</output></label>
+          <div class="btn-row">
+            <button class="btn" id="btnUndo" disabled>Undo</button>
+            <button class="btn" id="btnClear">Clear</button>
+          </div>
+          <p class="note">Paint stays on the picture while this tab is open. Ctrl or Cmd with Z undoes your last mark.</p>
         </div>
 
         <div class="pane" data-pane="chat" hidden>
@@ -389,7 +496,7 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     chat: 'https://stream.schwwaaa.net/embed/chat/readwrite/',
     feedName: 'FEED 01 — SCHWWAAA LIVE',
     recheckMs: 30000,
-    bootMs: 2600
+    chatCropPx: 72 // hides the embed's own logo and tagline strip; measured at desktop width (70px), so re-measure if Owncast changes its header
   };
 
   // Programming guide. Times are ISO with an offset. Placeholder entries: replace with the real schedule.
@@ -402,14 +509,46 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
   /* ============ helpers ============ */
   function $(id) { return document.getElementById(id); }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+  function hexToRgb(hex) {
+    var n = parseInt(hex.slice(1), 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+  }
+  function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(function (v) { return ('0' + Math.round(v).toString(16)).slice(-2); }).join('');
+  }
+  function hsvToRgb(h, s, v) {
+    var c = v * s, hh = (h % 360) / 60, x = c * (1 - Math.abs((hh % 2) - 1)), m = v - c, r = 0, g = 0, b = 0;
+    if (hh < 1) { r = c; g = x; } else if (hh < 2) { r = x; g = c; } else if (hh < 3) { g = c; b = x; }
+    else if (hh < 4) { g = x; b = c; } else if (hh < 5) { r = x; b = c; } else { r = c; b = x; }
+    return { r: (r + m) * 255, g: (g + m) * 255, b: (b + m) * 255 };
+  }
+  function rgbToHsv(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min, h = 0;
+    if (d) {
+      if (max === r) h = ((g - b) / d) % 6;
+      else if (max === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60;
+      if (h < 0) h += 360;
+    }
+    return { h: h, s: max ? d / max : 0, v: max };
+  }
 
-  /* ============ lens: state, presets, export and import ============ */
-  var LENS_DEFAULT = { name: 'clear', contrast: 1, saturate: 1, brightness: 1, hue: 0, sepia: 0, grayscale: 0, invert: false, blur: 0, scan: false, lowpass: 20000, bass: 0, treble: 0, pan: 0 };
+  /* ============ picture and sound: state, presets, export and import ============ */
+  var LENS_DEFAULT = {
+    name: 'clear',
+    contrast: 1, saturate: 1, brightness: 1, hue: 0, sepia: 0, grayscale: 0, blur: 0,
+    zoom: 1, flipH: false, flipV: false, invert: false, scan: false, grain: 0, vignette: 0,
+    volume: 1, highpass: 20, lowpass: 20000, bass: 0, mid: 0, treble: 0, pan: 0,
+    echo: 0, echoTime: 0.3, drive: 0
+  };
   var PRESETS = {
     clear: {},
-    microfiche: { contrast: 1.35, saturate: 0, brightness: 0.95, sepia: 0.55, blur: 0.4, scan: true },
-    nightshift: { hue: 190, saturate: 0.6, brightness: 0.9, contrast: 1.1 },
-    cassette: { sepia: 0.3, blur: 0.8, lowpass: 3200, bass: 4, treble: -4, saturate: 0.85 }
+    microfiche: { contrast: 1.35, saturate: 0, brightness: 0.95, sepia: 0.55, blur: 0.4, scan: true, grain: 0.25, vignette: 0.35 },
+    nightshift: { hue: 190, saturate: 0.6, brightness: 0.9, contrast: 1.1, vignette: 0.25 },
+    cassette: { sepia: 0.3, blur: 0.8, lowpass: 3200, bass: 4, treble: -4, saturate: 0.85, grain: 0.15, drive: 0.25, echo: 0.2 }
   };
   var LENS_KEYS = Object.keys(LENS_DEFAULT);
   var lens = clone(LENS_DEFAULT);
@@ -498,11 +637,11 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     e.target.value = '';
   });
 
-  /* ============ apply the lens to the picture and the sound ============ */
+  /* ============ apply the picture effects ============ */
   var video = $('video');
   var glass = $('glass');
 
-  function applyAll() {
+  function applyPicture() {
     video.style.filter = [
       'contrast(' + lens.contrast + ')',
       'saturate(' + lens.saturate + ')',
@@ -513,41 +652,87 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
       'hue-rotate(' + lens.hue + 'deg)',
       'blur(' + lens.blur + 'px)'
     ].join(' ');
+    var sx = lens.zoom * (lens.flipH ? -1 : 1);
+    var sy = lens.zoom * (lens.flipV ? -1 : 1);
+    video.style.transform = 'scale(' + sx + ', ' + sy + ')';
+    $('fxGrain').style.opacity = lens.grain;
+    $('fxVig').style.opacity = lens.vignette;
     glass.classList.toggle('scanned', !!lens.scan);
+  }
+
+  function applyAll() {
+    applyPicture();
     applyAudio();
   }
 
-  // Sound effects: the audio graph is built on the first press, because browsers want a gesture first.
+  /* ============ sound effects: a chain built on the first press ============ */
   var audio = null;
+  var lastDrive = -1;
+
+  // Soft clipping curve for the Drive control. Zero is a straight line, so the sound is untouched.
+  function driveCurve(amount) {
+    var n = 1024, curve = new Float32Array(n);
+    var k = 1 + amount * 12;
+    for (var i = 0; i < n; i++) {
+      var x = (i * 2) / (n - 1) - 1;
+      curve[i] = amount === 0 ? x : Math.tanh(k * x) / Math.tanh(k);
+    }
+    return curve;
+  }
+
   function ensureAudio() {
     if (audio) return;
     try {
       var Ctx = window.AudioContext || window.webkitAudioContext;
       var ctx = new Ctx();
       var src = ctx.createMediaElementSource(video);
-      var low = ctx.createBiquadFilter(); low.type = 'lowpass';
+      var hp = ctx.createBiquadFilter(); hp.type = 'highpass';
+      var lp = ctx.createBiquadFilter(); lp.type = 'lowpass';
       var bass = ctx.createBiquadFilter(); bass.type = 'lowshelf'; bass.frequency.value = 200;
+      var mid = ctx.createBiquadFilter(); mid.type = 'peaking'; mid.frequency.value = 1000; mid.Q.value = 0.9;
       var treble = ctx.createBiquadFilter(); treble.type = 'highshelf'; treble.frequency.value = 4000;
+      var drive = ctx.createWaveShaper(); drive.oversample = '2x';
       var pan = ctx.createStereoPanner();
-      src.connect(low).connect(bass).connect(treble).connect(pan).connect(ctx.destination);
-      audio = { ctx: ctx, low: low, bass: bass, treble: treble, pan: pan };
+      var dry = ctx.createGain();
+      var delay = ctx.createDelay(1.5);
+      var feedback = ctx.createGain(); feedback.gain.value = 0.4;
+      var wet = ctx.createGain();
+      var master = ctx.createGain();
+
+      src.connect(hp).connect(lp).connect(bass).connect(mid).connect(treble).connect(drive).connect(pan).connect(dry);
+      dry.connect(master);
+      dry.connect(delay);
+      delay.connect(feedback).connect(delay);
+      delay.connect(wet).connect(master);
+      master.connect(ctx.destination);
+
+      audio = { ctx: ctx, hp: hp, lp: lp, bass: bass, mid: mid, treble: treble, drive: drive, pan: pan, delay: delay, wet: wet, master: master };
       $('audioNote').textContent = 'Sound effects are on.';
       applyAudio();
     } catch (err) {
-      console.warn('Audio effects unavailable:', err);
+      console.warn('Sound effects unavailable:', err);
     }
   }
 
   function applyAudio() {
     if (!audio) return;
     var t = audio.ctx.currentTime;
-    audio.low.frequency.setValueAtTime(lens.lowpass, t);
+    audio.hp.frequency.setValueAtTime(lens.highpass, t);
+    audio.lp.frequency.setValueAtTime(lens.lowpass, t);
     audio.bass.gain.setValueAtTime(lens.bass, t);
+    audio.mid.gain.setValueAtTime(lens.mid, t);
     audio.treble.gain.setValueAtTime(lens.treble, t);
     audio.pan.pan.setValueAtTime(lens.pan, t);
+    audio.delay.delayTime.setValueAtTime(lens.echoTime, t);
+    audio.wet.gain.setValueAtTime(lens.echo, t);
+    audio.master.gain.setValueAtTime(lens.volume, t);
+    if (lens.drive !== lastDrive) {
+      audio.drive.curve = driveCurve(lens.drive);
+      lastDrive = lens.drive;
+    }
   }
 
-  /* ============ drawer: one panel, four tabs, beside the stage ============ */
+  /* ============ the drawer: one panel, four tabs, beside the stage ============ */
   var drawer = $('drawer');
   var drawerOpen = false;
   var currentTab = 'lens';
@@ -559,23 +744,27 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     document.querySelectorAll('[data-pane]').forEach(function (p) { p.hidden = p.dataset.pane !== tab; });
     document.querySelectorAll('.tabs [role=tab]').forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.tab === tab)); });
     if (tab === 'paint') sizePaint();
+    if (tab !== 'paint') closeWheel();
+    updatePaintMode();
     updateDeck();
   }
 
   function closeDrawer() {
     drawerOpen = false;
     drawer.classList.remove('open');
+    closeWheel();
+    updatePaintMode();
     updateDeck();
   }
 
   function updateDeck() {
-    document.querySelectorAll('[data-tool]').forEach(function (b) {
+    document.querySelectorAll('.deck [data-tool]').forEach(function (b) {
       b.classList.toggle('on', drawerOpen && currentTab === b.dataset.tool);
     });
-    $('btnChat').classList.toggle('on', drawerOpen && currentTab === 'chat' || chatState === 'below');
+    $('btnChat').classList.toggle('on', (drawerOpen && currentTab === 'chat') || chatState === 'below');
   }
 
-  document.querySelectorAll('[data-tool]').forEach(function (b) {
+  document.querySelectorAll('.deck [data-tool]').forEach(function (b) {
     b.addEventListener('click', function () {
       var t = b.dataset.tool;
       if (drawerOpen && currentTab === t) closeDrawer(); else openDrawer(t);
@@ -585,71 +774,352 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     t.addEventListener('click', function () { openDrawer(t.dataset.tab); });
   });
 
-  /* ============ paint: draw on the picture ============ */
+  /* ============ paint: an MS Paint-style set on the picture ============ */
   var paint = $('paint');
   var pctx = paint.getContext('2d');
-  var paintOn = false;
-  var painting = false;
+  var paintText = $('paintText');
+  var tool = 'brush';
+  var fillShape = false;
+  var paintColor = '#9fe8ff';
+  var undoStack = [];
+  var dragging = false;
+  var dragStart = null;
+  var base = null;
+  var swallowCanvasDown = false;
+
+  function paintActive() { return drawerOpen && currentTab === 'paint'; }
+
+  function updatePaintMode() {
+    paint.classList.toggle('active', paintActive());
+    if (!paintActive()) commitOrCancelText(false);
+  }
 
   function sizePaint() {
-    paint.width = glass.clientWidth;
-    paint.height = glass.clientHeight;
+    var w = glass.clientWidth, h = glass.clientHeight;
+    if (paint.width === w && paint.height === h) return;
+    var keep = null;
+    if (paint.width && paint.height) {
+      keep = document.createElement('canvas');
+      keep.width = paint.width; keep.height = paint.height;
+      keep.getContext('2d').drawImage(paint, 0, 0);
+    }
+    paint.width = w; paint.height = h;
+    undoStack = [];
+    if (keep) pctx.drawImage(keep, 0, 0, w, h);
+    updateUndoButton();
   }
   window.addEventListener('resize', sizePaint);
 
-  function pointOnPaint(e) {
-    var r = paint.getBoundingClientRect();
-    return {
-      x: (e.clientX - r.left) * (paint.width / r.width),
-      y: (e.clientY - r.top) * (paint.height / r.height)
-    };
+  function pushUndo(snapshot) {
+    if (undoStack.length >= 25) undoStack.shift();
+    undoStack.push(snapshot || pctx.getImageData(0, 0, paint.width, paint.height));
+    updateUndoButton();
   }
 
-  paint.addEventListener('pointerdown', function (e) {
-    if (!paintOn) return;
-    painting = true;
-    var p = pointOnPaint(e);
-    pctx.strokeStyle = $('paintColor').value;
-    pctx.lineWidth = Number($('paintSize').value) * (paint.width / 640);
+  function undo() {
+    if (!undoStack.length) return;
+    pctx.putImageData(undoStack.pop(), 0, 0);
+    updateUndoButton();
+  }
+
+  function updateUndoButton() {
+    $('btnUndo').disabled = undoStack.length === 0;
+  }
+
+  $('btnUndo').addEventListener('click', undo);
+  $('btnClear').addEventListener('click', function () {
+    pushUndo();
+    pctx.clearRect(0, 0, paint.width, paint.height);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (!paintActive() || e.target === paintText) return;
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      undo();
+    }
+  });
+
+  function pointOnPaint(e) {
+    var r = paint.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (paint.width / r.width), y: (e.clientY - r.top) * (paint.height / r.height) };
+  }
+
+  function setToolStyle(isEraser) {
+    pctx.globalCompositeOperation = isEraser ? 'destination-out' : 'source-over';
+    pctx.strokeStyle = paintColor;
+    pctx.fillStyle = paintColor;
+    pctx.lineWidth = Number($('paintSize').value);
     pctx.lineCap = 'round';
     pctx.lineJoin = 'round';
-    pctx.beginPath();
-    pctx.moveTo(p.x, p.y);
-  });
-  paint.addEventListener('pointermove', function (e) {
-    if (!painting) return;
-    var p = pointOnPaint(e);
-    pctx.lineTo(p.x, p.y);
-    pctx.stroke();
-  });
-  window.addEventListener('pointerup', function () { painting = false; });
+  }
 
-  $('btnPaintOn').addEventListener('click', function () {
-    paintOn = !paintOn;
-    paint.classList.toggle('active', paintOn);
-    $('btnPaintOn').classList.toggle('on', paintOn);
-    $('btnPaintOn').textContent = paintOn ? 'Paint off' : 'Paint on';
-    if (paintOn) sizePaint();
+  function drawShape(a, b) {
+    setToolStyle(false);
+    var x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
+    var w = Math.abs(b.x - a.x), h = Math.abs(b.y - a.y);
+    pctx.beginPath();
+    if (tool === 'line') {
+      pctx.moveTo(a.x, a.y);
+      pctx.lineTo(b.x, b.y);
+      pctx.stroke();
+    } else if (tool === 'rect') {
+      if (fillShape) pctx.fillRect(x, y, w, h); else pctx.strokeRect(x, y, w, h);
+    } else if (tool === 'ellipse') {
+      pctx.ellipse(x + w / 2, y + h / 2, Math.max(w / 2, 0.5), Math.max(h / 2, 0.5), 0, 0, Math.PI * 2);
+      if (fillShape) pctx.fill(); else pctx.stroke();
+    }
+  }
+
+  function floodFill(x, y) {
+    var w = paint.width, h = paint.height;
+    if (x < 0 || y < 0 || x >= w || y >= h) return;
+    var img = pctx.getImageData(0, 0, w, h), d = img.data;
+    var i0 = (y * w + x) * 4;
+    var tr = d[i0], tg = d[i0 + 1], tb = d[i0 + 2], ta = d[i0 + 3];
+    var fc = hexToRgb(paintColor);
+    if (tr === fc.r && tg === fc.g && tb === fc.b && ta === 255) return;
+    var stack = [x, y];
+    while (stack.length) {
+      var py = stack.pop(), px = stack.pop();
+      var i = (py * w + px) * 4;
+      if (d[i] !== tr || d[i + 1] !== tg || d[i + 2] !== tb || d[i + 3] !== ta) continue;
+      d[i] = fc.r; d[i + 1] = fc.g; d[i + 2] = fc.b; d[i + 3] = 255;
+      if (px > 0) stack.push(px - 1, py);
+      if (px < w - 1) stack.push(px + 1, py);
+      if (py > 0) stack.push(px, py - 1);
+      if (py < h - 1) stack.push(px, py + 1);
+    }
+    pctx.putImageData(img, 0, 0);
+  }
+
+  /* text: a small field at the click point; Enter places it, Escape cancels */
+  var textPoint = null;
+
+  function openText(p) {
+    textPoint = p;
+    var scale = paint.getBoundingClientRect().width / paint.width;
+    paintText.hidden = false;
+    paintText.value = '';
+    paintText.style.left = (p.x * scale) + 'px';
+    paintText.style.top = (p.y * scale - 12) + 'px';
+    paintText.style.color = paintColor;
+    paintText.style.fontSize = (Number($('paintSize').value) * 2 + 12) + 'px';
+    paintText.focus();
+  }
+
+  function commitOrCancelText(place) {
+    if (paintText.hidden) return;
+    var value = paintText.value.trim();
+    paintText.hidden = true;
+    if (place && value && textPoint) {
+      pushUndo();
+      pctx.globalCompositeOperation = 'source-over';
+      pctx.fillStyle = paintColor;
+      pctx.font = (Number($('paintSize').value) * 2 + 12) + 'px ' + getComputedStyle(document.body).fontFamily;
+      pctx.textBaseline = 'top';
+      pctx.fillText(value, textPoint.x, textPoint.y - 12);
+    }
+    textPoint = null;
+  }
+
+  paintText.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); commitOrCancelText(true); }
+    if (e.key === 'Escape') { e.preventDefault(); commitOrCancelText(false); }
   });
-  $('btnPaintClear').addEventListener('click', function () {
-    pctx.clearRect(0, 0, paint.width, paint.height);
+  paintText.addEventListener('blur', function () { commitOrCancelText(false); });
+
+  paint.addEventListener('pointerdown', function (e) {
+    if (!paintActive()) return;
+    if (swallowCanvasDown) { swallowCanvasDown = false; return; }
+    var p = pointOnPaint(e);
+    if (tool === 'text') { commitOrCancelText(true); openText(p); return; }
+    if (tool === 'bucket') {
+      pushUndo();
+      floodFill(Math.round(p.x), Math.round(p.y));
+      return;
+    }
+    var snap = pctx.getImageData(0, 0, paint.width, paint.height);
+    pushUndo(snap);
+    base = snap;
+    dragging = true;
+    dragStart = p;
+    try { paint.setPointerCapture(e.pointerId); } catch (err) { /* no live pointer to capture */ }
+    if (tool === 'brush' || tool === 'eraser') {
+      setToolStyle(tool === 'eraser');
+      pctx.beginPath();
+      pctx.moveTo(p.x, p.y);
+      pctx.lineTo(p.x + 0.01, p.y + 0.01);
+      pctx.stroke();
+    }
+  });
+
+  paint.addEventListener('pointermove', function (e) {
+    if (!dragging) return;
+    var p = pointOnPaint(e);
+    if (tool === 'brush' || tool === 'eraser') {
+      setToolStyle(tool === 'eraser');
+      pctx.lineTo(p.x, p.y);
+      pctx.stroke();
+      return;
+    }
+    pctx.putImageData(base, 0, 0);
+    drawShape(dragStart, p);
+  });
+
+  function endDrag() { dragging = false; pctx.globalCompositeOperation = 'source-over'; }
+  paint.addEventListener('pointerup', endDrag);
+  paint.addEventListener('pointercancel', endDrag);
+
+  // tool buttons
+  document.querySelectorAll('[data-tool-paint]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      tool = b.dataset.toolPaint;
+      document.querySelectorAll('[data-tool-paint]').forEach(function (x) { x.classList.toggle('on', x === b); });
+      commitOrCancelText(false);
+    });
+  });
+  $('btnFillShape').addEventListener('click', function () {
+    fillShape = !fillShape;
+    $('btnFillShape').classList.toggle('on', fillShape);
   });
   $('paintSize').addEventListener('input', function (e) {
     e.target.nextElementSibling.textContent = e.target.value;
   });
-  $('paintColor').addEventListener('input', function (e) {
-    e.target.nextElementSibling.textContent = e.target.value;
+
+  /* ============ colour wheel: a popover that closes on Escape or a click anywhere else ============ */
+  var wheel = $('wheel');
+  var wheelCanvas = $('wheelCanvas');
+  var wctx = wheelCanvas.getContext('2d');
+  var swatch = $('swatch');
+  var wheelOpen = false;
+  var wheelHSV = { h: 190, s: 0.5, v: 1 };
+  var SWATCHES = ['#ffffff', '#ebe7dc', '#9fe8ff', '#ff5a5a', '#ffb347', '#e8d44d', '#6bd66b', '#4b8bff', '#b36bff', '#ff6bcf', '#222222', '#000000'];
+
+  var R = 88;
+  function drawWheel() {
+    var img = wctx.createImageData(180, 180), d = img.data, c = 90;
+    for (var y = 0; y < 180; y++) {
+      for (var x = 0; x < 180; x++) {
+        var dx = x - c + 0.5, dy = y - c + 0.5;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > R) continue;
+        var hue = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
+        var rgb = hsvToRgb(hue, dist / R, wheelHSV.v);
+        var i = (y * 180 + x) * 4;
+        d[i] = rgb.r; d[i + 1] = rgb.g; d[i + 2] = rgb.b; d[i + 3] = 255;
+      }
+    }
+    wctx.clearRect(0, 0, 180, 180);
+    wctx.putImageData(img, 0, 0);
+    // the marker
+    var mx = c + Math.cos(wheelHSV.h * Math.PI / 180) * wheelHSV.s * R;
+    var my = c + Math.sin(wheelHSV.h * Math.PI / 180) * wheelHSV.s * R;
+    wctx.beginPath();
+    wctx.arc(mx, my, 5, 0, Math.PI * 2);
+    wctx.lineWidth = 2;
+    wctx.strokeStyle = wheelHSV.v > 0.6 ? '#000' : '#fff';
+    wctx.stroke();
+  }
+
+  function applyWheelColor(fromHsv) {
+    var rgb = hsvToRgb(wheelHSV.h, wheelHSV.s, wheelHSV.v);
+    paintColor = rgbToHex(rgb.r, rgb.g, rgb.b);
+    swatch.style.background = paintColor;
+    $('wheelHex').value = paintColor.toUpperCase();
+    if (!fromHsv) $('wheelV').value = wheelHSV.v;
+    drawWheel();
+  }
+
+  function openWheel() {
+    var rgb = hexToRgb(paintColor);
+    wheelHSV = rgbToHsv(rgb.r, rgb.g, rgb.b);
+    if (wheelHSV.s === 0) wheelHSV.h = 190;
+    $('wheelV').value = wheelHSV.v;
+    $('wheelHex').value = paintColor.toUpperCase();
+    wheel.hidden = false;
+    wheelOpen = true;
+    swatch.setAttribute('aria-expanded', 'true');
+    drawWheel();
+  }
+
+  function closeWheel() {
+    if (!wheelOpen) return;
+    wheel.hidden = true;
+    wheelOpen = false;
+    swatch.setAttribute('aria-expanded', 'false');
+  }
+
+  swatch.addEventListener('click', function () {
+    if (wheelOpen) closeWheel(); else openWheel();
   });
+
+  // any press outside the wheel and its swatch closes it; a press on the picture is used only to close
+  document.addEventListener('pointerdown', function (e) {
+    if (!wheelOpen) return;
+    if (wheel.contains(e.target) || e.target === swatch) return;
+    closeWheel();
+    if (e.target === paint) swallowCanvasDown = true;
+  }, true);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && wheelOpen) closeWheel();
+  });
+
+  var wheelDown = false;
+  function pickWheel(e) {
+    var r = wheelCanvas.getBoundingClientRect();
+    var x = (e.clientX - r.left) * (180 / r.width) - 90;
+    var y = (e.clientY - r.top) * (180 / r.height) - 90;
+    var dist = Math.min(Math.sqrt(x * x + y * y), R);
+    wheelHSV.h = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+    wheelHSV.s = dist / R;
+    applyWheelColor(false);
+  }
+  wheelCanvas.addEventListener('pointerdown', function (e) {
+    wheelDown = true;
+    try { wheelCanvas.setPointerCapture(e.pointerId); } catch (err) { /* no live pointer to capture */ }
+    pickWheel(e);
+  });
+  wheelCanvas.addEventListener('pointermove', function (e) { if (wheelDown) pickWheel(e); });
+  wheelCanvas.addEventListener('pointerup', function () { wheelDown = false; });
+
+  $('wheelV').addEventListener('input', function (e) {
+    wheelHSV.v = parseFloat(e.target.value);
+    applyWheelColor(true);
+  });
+  $('wheelHex').addEventListener('change', function (e) {
+    var v = e.target.value.trim();
+    if (!/^#?[0-9a-fA-F]{6}$/.test(v)) { e.target.value = paintColor.toUpperCase(); return; }
+    var rgb = hexToRgb(v[0] === '#' ? v : '#' + v);
+    wheelHSV = rgbToHsv(rgb.r, rgb.g, rgb.b);
+    applyWheelColor(false);
+  });
+
+  // preset swatches
+  var sw = $('swatches');
+  SWATCHES.forEach(function (c) {
+    var b = document.createElement('button');
+    b.style.background = c;
+    b.setAttribute('aria-label', 'Colour ' + c);
+    b.addEventListener('click', function () {
+      var rgb = hexToRgb(c);
+      wheelHSV = rgbToHsv(rgb.r, rgb.g, rgb.b);
+      if (wheelHSV.s === 0) wheelHSV.h = 190;
+      applyWheelColor(false);
+    });
+    sw.appendChild(b);
+  });
+  swatch.style.background = paintColor;
 
   /* ============ chat: beside the stage, or moved below it ============ */
   var chatFrame = document.createElement('iframe');
   chatFrame.title = 'Live chat';
   var chatSlotSide = document.createElement('div');
   chatSlotSide.className = 'chat-slot';
-  var chatSlotBelow = $('chatSlotBelow');
   chatSlotSide.appendChild(chatFrame);
   var chatPane = document.querySelector('[data-pane=chat]');
   chatPane.insertBefore(chatSlotSide, chatPane.firstChild);
+  var chatSlotBelow = $('chatSlotBelow');
 
   var chatState = 'side'; // 'side' | 'below' | 'closed'
 
@@ -724,12 +1194,18 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     $('clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }, 1000);
 
-  /* ============ the ? : the blurb and links under the deck ============ */
+  /* ============ the ? : opens the blurb and links; pulses until first clicked ============ */
   var help = $('btnHelp');
+  var aboutModal = $('aboutModal');
   help.addEventListener('click', function () {
-    var open = $('about').hidden;
-    $('about').hidden = !open;
-    help.setAttribute('aria-expanded', String(open));
+    help.classList.remove('pulse');
+    help.setAttribute('aria-expanded', 'true');
+    aboutModal.showModal();
+  });
+  aboutModal.addEventListener('close', function () { help.setAttribute('aria-expanded', 'false'); });
+  $('btnAboutClose').addEventListener('click', function () { aboutModal.close(); });
+  aboutModal.addEventListener('click', function (e) {
+    if (e.target === aboutModal) aboutModal.close();
   });
 
   /* ============ the launch button: unmute, then the button leaves ============ */
@@ -863,10 +1339,10 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
 
   /* ============ boot: the terminal wakes up, then the room fades in ============ */
   var BOOT_LINES = [
-    'SCHWWAAA ARCHIVE TERMINAL  v0.4',
+    'SCHWWAAA ARCHIVE TERMINAL  v0.5',
     'mounting footage ............ <span class="ok">ok</span>',
     'calibrating phosphor ........ <span class="ok">ok</span>',
-    'lens bank ................... <span class="ok">ready</span>',
+    'picture and sound banks ..... <span class="ok">ready</span>',
     'programming guide ........... <span class="ok">loaded</span>',
     'searching for signal ........ ',
     ''
@@ -889,6 +1365,7 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
   }
 
   function init() {
+    document.documentElement.style.setProperty('--crop', CONFIG.chatCropPx + 'px');
     syncLensUI();
     applyAll();
     $('feedName').textContent = CONFIG.feedName;
