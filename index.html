@@ -99,6 +99,10 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
   opacity: 0; transition: opacity 1.8s ease;
 }
 .glass.on-air video { opacity: 1; }
+/* the replay: a YouTube player on the same stage, shown only while offline */
+.yt-clip { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; z-index: 1; display: none; background: #000; }
+.glass.yt .yt-clip { display: block; }
+.glass.yt video { visibility: hidden; }
 /* effects layers: all sit above the picture and never block it */
 .fx { position: absolute; inset: 0; pointer-events: none; }
 .fx-scan {
@@ -177,10 +181,19 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 .about { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--faint); text-align: center; }
 .blurb { max-width: 80ch; margin: 0 auto; font-size: 13px; line-height: 1.7; color: var(--dim); font-weight: 300; }
 .blurb strong { color: var(--bone); font-weight: 500; }
-.blurb .beats { display: block; margin-top: 8px; color: var(--bone); font-weight: 500; letter-spacing: 0.02em; }
-.links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 26px; margin: 18px 0 0; font-size: 13px; }
-.links a { color: var(--dim); border-bottom: 1px solid transparent; transition: color 0.2s, border-color 0.2s; }
-.links a:hover { color: var(--ice); border-bottom-color: var(--ice); }
+.blurb .beats { display: block; margin-top: 8px; color: var(--dim); font-weight: 300; letter-spacing: 0.02em; }
+/* the links: quiet typography, a hairline under each, ice on hover */
+.links {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 34px;
+  margin: 24px 0 0; font-size: 15px;
+}
+.links a {
+  color: var(--bone); font-weight: 600; letter-spacing: 0.01em;
+  padding-bottom: 4px; border-bottom: 1px solid var(--faint);
+  transition: color 0.25s ease, border-color 0.25s ease;
+}
+.links a::before { content: '›'; color: var(--ice); font-weight: 400; margin-right: 7px; }
+.links a:hover, .links a:focus-visible { color: var(--ice); border-bottom-color: var(--ice); outline: 0; }
 
 /* chat below: under the blurb and links; the header of the embed is cropped away */
 .chat-below { margin-top: 22px; }
@@ -308,12 +321,12 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     <span class="beats">We build. We iterate. We inspire. We shape tomorrow. Today.</span>
   </p>
   <nav class="links" aria-label="Links">
-    <a href="https://software.schwwaaa.net" target="_blank" rel="noopener">software</a>
-    <a href="https://www.youtube.com/@schwwaaa" target="_blank" rel="noopener">youtube</a>
-    <a href="https://www.instagram.com/schwwaaa" target="_blank" rel="noopener">instagram</a>
-    <a href="https://twitter.com/schwwaaa" target="_blank" rel="noopener">twitter</a>
-    <a href="https://schwwaaa.net/archive.html">archive</a>
-  </nav>
+          <a href="https://archive.org/details/@sch_wwaaa" target="_blank" rel="noopener">archive</a>
+          <a href="https://www.youtube.com/@schwwaaa" target="_blank" rel="noopener">youtube</a>
+          <a href="https://schwwaaa.net" target="_blank" rel="noopener">schwwaaa.net</a>
+          <a href="https://www.instagram.com/schwwaaa" target="_blank" rel="noopener">instagram</a>
+          <a href="https://schwwaaa.net/software" target="_blank" rel="noopener">software</a>
+        </nav>
 </dialog>
 
 <main>
@@ -331,6 +344,7 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
 
       <div class="glass flicker" id="glass">
         <video id="video" playsinline muted></video>
+        <iframe class="yt-clip" id="ytClip" title="Replay" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
         <div class="fx fx-scan"></div>
         <div class="fx fx-grain" id="fxGrain"></div>
         <div class="fx fx-vig" id="fxVig"></div>
@@ -367,11 +381,11 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
           <span class="beats">We build. We iterate. We inspire. We shape tomorrow. Today.</span>
         </p>
         <nav class="links" aria-label="Links">
-          <a href="https://software.schwwaaa.net" target="_blank" rel="noopener">software</a>
+          <a href="https://archive.org/details/@sch_wwaaa" target="_blank" rel="noopener">archive</a>
           <a href="https://www.youtube.com/@schwwaaa" target="_blank" rel="noopener">youtube</a>
+          <a href="https://schwwaaa.net" target="_blank" rel="noopener">schwwaaa.net</a>
           <a href="https://www.instagram.com/schwwaaa" target="_blank" rel="noopener">instagram</a>
-          <a href="https://twitter.com/schwwaaa" target="_blank" rel="noopener">twitter</a>
-          <a href="https://schwwaaa.net/archive.html">archive</a>
+          <a href="https://schwwaaa.net/software" target="_blank" rel="noopener">software</a>
         </nav>
       </section>
 
@@ -506,6 +520,8 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     // It's refreshed every guideRefreshMs. If it can't be loaded, the built-in GUIDE below is used.
     guideUrl: 'guide.json',
     guideRefreshMs: 300000,
+    // Plays, looping and muted, while the stream is offline. Same launch button, same unmute.
+    offlineYouTube: 'e7QLoMve8BE',
     // 0 shows the chat embed's own logo and tagline. Raise it to crop them away (70px at desktop width).
     chatCropPx: 0
   };
@@ -669,6 +685,9 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     $('fxGrain').style.opacity = lens.grain;
     $('fxVig').style.opacity = lens.vignette;
     glass.classList.toggle('scanned', !!lens.scan);
+    // the replay is a YouTube frame, so it takes the same picture effects as the live feed
+    ytClip.style.filter = video.style.filter;
+    ytClip.style.transform = video.style.transform;
   }
 
   function applyAll() {
@@ -1182,13 +1201,31 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
   var btnFull = $('btnFull');
 
   btnPause.addEventListener('click', function () {
+    if (clipOn) {
+      ytPlaying = !ytPlaying;
+      ytCmd(ytPlaying ? 'playVideo' : 'pauseVideo');
+      syncClipButtons();
+      return;
+    }
     if (video.paused) { video.play(); } else { video.pause(); }
   });
   btnMute.addEventListener('click', function () {
+    if (clipOn) {
+      ytMuted = !ytMuted;
+      soundOn = !ytMuted;
+      ytCmd(ytMuted ? 'mute' : 'unMute');
+      syncClipButtons();
+      return;
+    }
     ensureAudio();
     video.muted = !video.muted;
     syncSound();
   });
+
+  function syncClipButtons() {
+    btnMute.textContent = ytMuted ? 'Sound off' : 'Sound on';
+    btnPause.innerHTML = ytPlaying ? ICON_PAUSE + '<span>Pause</span>' : ICON_PLAY + '<span>Play</span>';
+  }
   btnFull.addEventListener('click', function () {
     if (document.fullscreenElement) { document.exitFullscreen(); } else if (glass.requestFullscreen) { glass.requestFullscreen(); }
   });
@@ -1231,6 +1268,13 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     soundOn = true;
     video.muted = false;
     video.play();
+    if (clipOn) {
+      ytMuted = false;
+      ytPlaying = true;
+      ytCmd('unMute');
+      ytCmd('playVideo');
+      syncClipButtons();
+    }
     bigPlay.classList.add('leaving');
     setTimeout(function () {
       bigPlay.hidden = true;
@@ -1245,15 +1289,70 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
   var signal = $('signal');
   var recheck = null;
   var isLive = false;
+  var clipOn = false;
+
+  // While offline, the replay plays on the same stage: muted and looping on load, unmuted by the launch button.
+  // It's a YouTube player, so the sound effects chain can't reach it. Picture effects and paint still apply.
+  var ytClip = $('ytClip');
+  var ytMuted = true;
+  var ytPlaying = true;
+
+  function ytEmbedUrl() {
+    var id = CONFIG.offlineYouTube;
+    return 'https://www.youtube.com/embed/' + id +
+      '?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=' + id +
+      '&controls=0&rel=0&modestbranding=1&playsinline=1&origin=' + encodeURIComponent(location.origin);
+  }
+
+  function ytCmd(func) {
+    if (!ytClip.contentWindow) return;
+    ytClip.contentWindow.postMessage(JSON.stringify({ event: 'command', func: func, args: [] }), 'https://www.youtube.com');
+  }
+
+  function playClip() {
+    if (clipOn) return;
+    clipOn = true;
+    ytMuted = !soundOn;
+    ytPlaying = true;
+    if (!ytClip.getAttribute('src')) ytClip.src = ytEmbedUrl();
+    glass.classList.add('yt');
+    if (!soundOn) glass.classList.add('ready');
+    glass.classList.add('on-air');
+    setState('offline');
+  }
+
+  function stopClip() {
+    clipOn = false;
+    glass.classList.remove('yt');
+    ytClip.removeAttribute('src');
+  }
+
+  // Checks the live playlist without touching the picture: Owncast's offline playlist ends with ENDLIST.
+  function probe() {
+    clearTimeout(recheck);
+    fetch(CONFIG.stream, { cache: 'no-store' })
+      .then(function (r) { return r.text(); })
+      .then(function (master) {
+        var line = master.split('\n').filter(function (l) { return l && l.charAt(0) !== '#'; })[0];
+        if (!line) throw new Error('no variant');
+        return fetch(new URL(line, CONFIG.stream).href, { cache: 'no-store' }).then(function (r) { return r.text(); });
+      })
+      .then(function (variant) {
+        var live = variant.indexOf('#EXT-X-ENDLIST') === -1 && variant.indexOf('#EXTINF') !== -1;
+        if (live) connect(); else onOffline();
+      })
+      .catch(function () { onOffline(); });
+  }
 
   function setState(state) {
     // state: 'searching' | 'live' | 'offline'
     var live = state === 'live';
-    glass.classList.toggle('offline', state === 'offline');
-    signal.textContent = live ? 'LIVE' : state === 'offline' ? 'OFFLINE' : 'SEARCHING';
+    glass.classList.toggle('offline', state === 'offline' && !clipOn);
+    signal.textContent = live ? 'LIVE' : clipOn ? 'REPLAY' : state === 'offline' ? 'OFFLINE' : 'SEARCHING';
     signal.classList.toggle('off', !live);
 
-    [btnPause, btnMute, btnFull].forEach(function (b) { b.disabled = !live; });
+    // the deck works for the live feed and for the replay clip
+    [btnPause, btnMute, btnFull].forEach(function (b) { b.disabled = !(live || clipOn); });
 
     // chat only exists while the feed is live
     $('btnChat').disabled = !live;
@@ -1269,6 +1368,7 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
   function onLive() {
     if (isLive) return;
     isLive = true;
+    stopClip();
     setState('live');
     if (!soundOn) glass.classList.add('ready');
     // start muted and silent; the launch button brings the sound
@@ -1286,8 +1386,9 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     if (hls) { hls.destroy(); hls = null; }
     glass.classList.remove('ready', 'on-air');
     setState('offline');
+    playClip();
     clearTimeout(recheck);
-    recheck = setTimeout(connect, CONFIG.recheckMs);
+    recheck = setTimeout(probe, CONFIG.recheckMs);
   }
 
   function connect() {
@@ -1401,7 +1502,7 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     $('feedName').textContent = CONFIG.feedName;
     renderGuide('offline');
     setState('searching');
-    connect();
+    probe();
     loadGuide();
     setInterval(loadGuide, CONFIG.guideRefreshMs);
   }
