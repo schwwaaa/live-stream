@@ -104,14 +104,23 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 }
 .glass.on-air video { opacity: 1; }
 /* the offline note under the stage, shown only while the replay is on */
-/* the offline note sits on the video, at the top, like the launch button */
+/* the offline note: a card over the stage; OK dismisses it and the video shows */
 .offline-note {
-  position: absolute; top: 18px; left: 50%; transform: translateX(-50%); z-index: 6;
-  width: min(88%, 540px); margin: 0; padding: 14px 18px; text-align: center;
-  background: rgba(10, 12, 14, 0.84); border: 1px solid var(--faint); border-radius: 6px;
-  font-size: 13px; line-height: 1.6; color: var(--dim); font-weight: 300;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+  position: fixed; inset: 0; z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(3px);
 }
+.offline-card {
+  width: min(92%, 560px); padding: 30px 32px 26px; text-align: center;
+  background: #000; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 8px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+}
+.offline-card p { margin: 0 0 24px; font-size: 17px; line-height: 1.6; color: #d9d9d9; font-weight: 400; }
+.offline-card a { color: #fff; border-bottom: 1px solid #fff; }
+.offline-card button {
+  min-width: 120px; padding: 11px 24px; font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #fff; background: transparent; border: 1px solid #fff; border-radius: 6px; cursor: pointer; transition: background 0.2s, color 0.2s;
+}
+.offline-card button:hover { background: #fff; color: #000; }
 .offline-note a { color: var(--bone); font-weight: 500; border-bottom: 1px solid var(--faint); transition: color 0.2s, border-color 0.2s; }
 .offline-note a:hover { color: var(--ice); border-bottom-color: var(--ice); }
 
@@ -176,17 +185,17 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 .big-play.leaving .led { animation: none; }
 
 /* the deck */
-.deck { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.deck { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .deck button {
   display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid rgba(235, 231, 220, 0.42); background: rgba(235, 231, 220, 0.04);
   padding: 9px 15px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--bone); border-radius: 5px; transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
-.deck button svg { width: 11px; height: 11px; fill: currentColor; flex: none; }
+.deck button svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.deck button svg.solid { fill: currentColor; stroke: none; }
 .deck button:hover:not(:disabled) { background: rgba(159, 232, 255, 0.08); }
 .deck button:hover:not(:disabled), .deck button.on { color: var(--ice); border-color: var(--ice); }
-.deck .clock { margin-left: auto; font-size: 11px; color: var(--dim); letter-spacing: 0.08em; font-variant-numeric: tabular-nums; }
 
 /* the static about: blurb and links, directly under the deck */
 .about { max-width: 940px; margin: 22px auto 0; padding-top: 20px; border-top: 1px solid var(--faint); text-align: center; }
@@ -233,6 +242,7 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 }
 .tabs button:hover, .tabs button[aria-selected='true'] { color: var(--ice); border-color: var(--ice); }
 .tabs button:disabled { opacity: 0.35; }
+.tabs button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .pane h3 { margin: 0 0 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ice); }
 .pane .note { margin: 12px 0 0; color: var(--dim); line-height: 1.6; font-size: 11px; }
 
@@ -345,12 +355,13 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
 
 @media (max-width: 860px) {
   main { padding: 28px 16px 48px; }
-  .big-play { top: auto; bottom: 10px; height: 46px; transform: translateX(-50%); }
-  .big-play:hover, .big-play:active { transform: translateX(-50%); }
-  .big-play:active { transform: translateX(-50%) translateY(2px); }
-  .big-play.leaving { transform: translateX(-50%) scale(1.15); }
-  .offline-note { top: 10px; width: min(92%, 540px); padding: 10px 14px; font-size: 12px; line-height: 1.5; }
-  .room { flex-direction: column; }
+  /* the control row is icons only on phones, to save space */
+  .deck button { min-width: 42px; justify-content: center; padding: 9px 11px; }
+  .deck button span { display: none; }
+  .offline-card { padding: 22px 20px 20px; }
+  .offline-card p { font-size: 15px; margin-bottom: 18px; }
+  .room { flex-direction: column; align-items: stretch; }
+  .screen { width: 100%; }
   .drawer:not(.open) { display: none; }
   .drawer.open { width: 100%; }
   .drawer-inner { width: 100%; }
@@ -427,6 +438,13 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
         </nav>
 </dialog>
 
+  <div class="offline-note" id="offlineNote" hidden>
+    <div class="offline-card">
+      <p>The live stream is offline right now. While you wait, watch this orientation video to learn about our journey at schwwaaa, and visit <a href="https://schwwaaa.net" target="_blank" rel="noopener">schwwaaa.net</a> for more.</p>
+      <button id="btnOfflineOk">OK</button>
+    </div>
+  </div>
+
 <main>
   <header class="masthead">
     <img src="https://schwwaaa.net/img/schwwaaa-trans.png" alt="schwwaaa">
@@ -454,9 +472,6 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
           <p>The feed is dark right now. The next broadcast is listed in the programming guide below.</p>
         </div>
 
-        <p class="offline-note" id="offlineNote" hidden>
-          The live stream is offline right now. While you wait, watch this orientation video to learn about our journey at schwwaaa, and visit <a href="https://schwwaaa.net" target="_blank" rel="noopener">schwwaaa.net</a> for more.
-        </p>
 
         <button class="big-play" id="bigPlay" aria-label="Watch with sound">
           <svg class="ico-speaker" viewBox="0 0 24 24" aria-hidden="true">
@@ -470,14 +485,13 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
       </div>
 
       <div class="deck">
-        <button id="btnPause" disabled>Pause</button>
-        <button id="btnMute" disabled>Sound off</button>
-        <button data-tool="lens">Lens</button>
-        <button data-tool="audio">Audio</button>
-        <button data-tool="paint">Paint</button>
-        <button id="btnChat" disabled>Chat</button>
-        <button id="btnFull" disabled>Fullscreen</button>
-        <span class="clock" id="clock"></span>
+        <button id="btnPause" title="Pause" disabled><svg viewBox="0 0 24 24" aria-hidden="true" class="solid"><path d="M6 4.5h4v15H6zM14 4.5h4v15h-4z"/></svg><span>Pause</span></button>
+        <button id="btnMute" title="Sound" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg><span>Sound off</span></button>
+        <button data-tool="lens" title="Lens"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg><span>Lens</span></button>
+        <button data-tool="audio" title="Audio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V11M10 19V5M15 19v-9M20 19V9"/></svg><span>Audio</span></button>
+        <button data-tool="paint" title="Paint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16 5l3 3L8 19z"/></svg><span>Paint</span></button>
+        <button id="btnChat" title="Chat" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Chat</span></button>
+        <button id="btnFull" title="Fullscreen" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span>Fullscreen</span></button>
       </div>
 
 
@@ -486,11 +500,11 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
     <aside class="drawer" id="drawer" aria-label="Tools">
       <div class="drawer-inner">
         <div class="tabs" role="tablist">
-          <button role="tab" data-tab="lens">Lens</button>
-          <button role="tab" data-tab="audio">Audio</button>
-          <button role="tab" data-tab="paint">Paint</button>
-          <button role="tab" data-tab="chat" id="tabChat">Chat</button>
-          <button role="tab" data-tab="share">Share</button>
+          <button role="tab" data-tab="lens" title="Lens" aria-label="Lens"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></button>
+          <button role="tab" data-tab="audio" title="Audio" aria-label="Audio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V11M10 19V5M15 19v-9M20 19V9"/></svg></button>
+          <button role="tab" data-tab="paint" title="Paint" aria-label="Paint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16 5l3 3L8 19z"/></svg></button>
+          <button role="tab" data-tab="chat" id="tabChat" title="Chat" aria-label="Chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></button>
+          <button role="tab" data-tab="share" title="Share" aria-label="Share"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 8l4-4 4 4M5 14v5h14v-5"/></svg></button>
         </div>
 
         <div class="pane" data-pane="lens">
@@ -629,6 +643,10 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
 <script>
 (function () {
   'use strict';
+
+  // always open at the very top, even when the browser would restore an earlier scroll position
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
 
   /* ============ config: edit these ============ */
   var CONFIG = {
@@ -1554,7 +1572,7 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
   });
 
   function syncClipButtons() {
-    btnMute.textContent = ytMuted ? 'Sound off' : 'Sound on';
+    btnMute.innerHTML = soundLabel(ytMuted);
     btnPause.innerHTML = ytPlaying ? ICON_PAUSE + '<span>Pause</span>' : ICON_PLAY + '<span>Play</span>';
   }
   btnFull.addEventListener('click', function () {
@@ -1567,20 +1585,23 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
   // iPhone Safari can't fullscreen a page section, so the button is hidden there
   if (!glass.requestFullscreen) btnFull.hidden = true;
 
-  var ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>';
-  var ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5h4v15H6zM14 4.5h4v15h-4z"/></svg>';
+  var ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true" class="solid"><path d="M7 4.5v15l12-7.5z"/></svg>';
+  var ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true" class="solid"><path d="M6 4.5h4v15H6zM14 4.5h4v15h-4z"/></svg>';
+
+  var ICON_SOUND = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>';
+  var ICON_MUTE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+  function soundLabel(muted) {
+    return (muted ? ICON_MUTE : ICON_SOUND) + '<span>' + (muted ? 'Sound off' : 'Sound on') + '</span>';
+  }
 
   function syncSound() {
-    btnMute.textContent = video.muted ? 'Sound off' : 'Sound on';
+    btnMute.innerHTML = soundLabel(video.muted);
     btnPause.innerHTML = video.paused ? ICON_PLAY + '<span>Play</span>' : ICON_PAUSE + '<span>Pause</span>';
   }
   video.addEventListener('play', syncSound);
   video.addEventListener('pause', syncSound);
   video.addEventListener('volumechange', syncSound);
 
-  setInterval(function () {
-    $('clock').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  }, 1000);
 
   /* ============ the ? : opens the blurb and links; pulses until first clicked ============ */
   var help = $('btnHelp');
@@ -1595,6 +1616,8 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
   aboutModal.addEventListener('click', function (e) {
     if (e.target === aboutModal) aboutModal.close();
   });
+
+  $('btnOfflineOk').addEventListener('click', function () { $('offlineNote').hidden = true; });
 
   /* ============ the launch button: unmute, then the button leaves ============ */
   var bigPlay = $('bigPlay');
