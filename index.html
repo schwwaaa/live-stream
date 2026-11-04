@@ -6,7 +6,7 @@
 <title>schwwaaa — archive terminal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
 <style>
 /* ============ tokens ============ */
@@ -57,7 +57,7 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 .masthead { text-align: center; margin-bottom: 26px; opacity: 0; transition: opacity 1.2s ease 0.2s; }
 .booted .masthead { opacity: 1; }
 .masthead img { width: min(300px, 62vw); height: auto; display: block; margin: 0 auto; filter: invert(1); }
-.masthead .tagline { margin: 6px 0 0; font: 12px var(--mono); color: var(--dim); letter-spacing: 0.04em; }
+.masthead .tagline { margin: 8px 0 0; font: 17px var(--mono); color: var(--dim); letter-spacing: 0.04em; }
 
 .help {
   position: fixed; top: 16px; right: 16px; z-index: 20; width: 38px; height: 38px; border-radius: 50%;
@@ -85,8 +85,11 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
   display: flex; justify-content: space-between; align-items: center; gap: 10px;
   font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); padding: 0 2px 9px;
 }
-#signal { color: var(--ice); }
-#signal.off { color: var(--dim); }
+#signal { display: inline-flex; align-items: center; gap: 8px; color: var(--dim); }
+#signal::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+#signal.live { color: #6bd66b; }
+#signal.live::before { box-shadow: 0 0 8px #6bd66b; animation: led 1.6s ease-in-out infinite; }
+#signal.offline { color: #ff5a5a; }
 
 /* the glass */
 .glass {
@@ -99,6 +102,18 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
   opacity: 0; transition: opacity 1.8s ease;
 }
 .glass.on-air video { opacity: 1; }
+/* the offline note under the stage, shown only while the replay is on */
+/* the offline note sits on the video, at the top, like the launch button */
+.offline-note {
+  position: absolute; top: 18px; left: 50%; transform: translateX(-50%); z-index: 6;
+  width: min(88%, 540px); margin: 0; padding: 14px 18px; text-align: center;
+  background: rgba(10, 12, 14, 0.84); border: 1px solid var(--faint); border-radius: 6px;
+  font-size: 13px; line-height: 1.6; color: var(--dim); font-weight: 300;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+}
+.offline-note a { color: var(--bone); font-weight: 500; border-bottom: 1px solid var(--faint); transition: color 0.2s, border-color 0.2s; }
+.offline-note a:hover { color: var(--ice); border-bottom-color: var(--ice); }
+
 /* the replay: a YouTube player on the same stage, shown only while offline */
 .yt-clip { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; z-index: 1; display: none; background: #000; }
 .glass.yt .yt-clip { display: block; }
@@ -158,9 +173,13 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 @keyframes sweep { 0% { left: -40%; } 60%, 100% { left: 120%; } }
 .big-play:hover { border-color: var(--ice); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), inset 0 -2px 0 rgba(0, 0, 0, 0.7), 0 0 30px rgba(159, 232, 255, 0.22), 0 18px 40px rgba(0, 0, 0, 0.7); }
 .big-play:active { transform: translate(-50%, -50%) translateY(2px); }
-.big-play .led { width: 8px; height: 8px; border-radius: 50%; background: var(--ice); box-shadow: 0 0 10px var(--ice); animation: led 1.6s ease-in-out infinite; }
-.big-play svg { width: 14px; height: 14px; fill: var(--ice); flex: none; }
-@keyframes led { 50% { opacity: 0.35; } }
+.big-play svg { width: 18px; height: 18px; fill: var(--ice); flex: none; }
+.big-play .wave { opacity: 0.25; animation: wave 1.4s ease-in-out infinite; }
+.big-play .w2 { animation-delay: 0.25s; }
+@keyframes wave { 50% { opacity: 1; } }
+.big-play .ico-play { display: none; }
+.big-play.yt .ico-speaker { display: none; }
+.big-play.yt .ico-play { display: block; }
 .big-play.leaving { animation: none; pointer-events: none; transition: transform 0.5s ease-out, opacity 0.5s ease, filter 0.5s ease; transform: translate(-50%, -50%) scale(1.15); opacity: 0; filter: blur(6px); }
 .big-play.leaving .led { animation: none; }
 
@@ -264,9 +283,10 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border: 0; bord
 
 /* ============ programming ============ */
 .guide { margin-top: 56px; border-top: 1px solid var(--faint); padding-top: 22px; }
+.guide, .guide h3 { font-family: 'Fraunces', Georgia, serif; }
 .guide h3 { margin: 0 0 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ice); display: flex; justify-content: space-between; }
 .guide h3 span { color: var(--dim); font-weight: 500; }
-.guide table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.guide table { width: 100%; border-collapse: collapse; font-size: 15px; }
 .guide td { padding: 11px 6px; border-bottom: 1px solid var(--faint); vertical-align: top; }
 .guide td.when { width: 180px; color: var(--dim); white-space: nowrap; }
 .guide td.title strong { font-weight: 500; }
@@ -276,12 +296,14 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border: 0; bord
 .guide tr.now td.title strong { color: var(--ice); }
 .guide .empty { color: var(--dim); padding: 14px 0; }
 
-footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 0.16em; color: var(--dim); text-transform: uppercase; }
+footer { margin-top: 48px; text-align: center; font-size: 11px; letter-spacing: 0.12em; color: var(--dim); }
+footer a { color: var(--bone); border-bottom: 1px solid var(--faint); transition: color 0.2s, border-color 0.2s; }
+footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
 
 /* ============ the ? modal ============ */
 .modal {
   border: 1px solid var(--faint); border-radius: 8px; background: var(--ink-2); color: var(--bone);
-  padding: 30px 32px 26px; max-width: min(640px, 92vw); width: 100%;
+  padding: 52px 44px 30px; max-width: min(640px, 92vw); width: 100%;
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
 }
 .modal::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(3px); }
@@ -293,7 +315,13 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
 /* ============ small screens ============ */
 @media (max-width: 860px) {
   main { padding: 28px 16px 48px; }
+  .big-play { top: auto; bottom: 10px; height: 46px; transform: translateX(-50%); }
+  .big-play:hover, .big-play:active { transform: translateX(-50%); }
+  .big-play:active { transform: translateX(-50%) translateY(2px); }
+  .big-play.leaving { transform: translateX(-50%) scale(1.15); }
+  .offline-note { top: 10px; width: min(92%, 540px); padding: 10px 14px; font-size: 12px; line-height: 1.5; }
   .room { flex-direction: column; }
+  .drawer:not(.open) { display: none; }
   .drawer.open { width: 100%; }
   .drawer-inner { width: 100%; }
   .big-play { height: 52px; font-size: 11px; padding: 0 22px 0 18px; }
@@ -357,10 +385,18 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
           <p>The feed is dark right now. The next broadcast is listed in the programming guide below.</p>
         </div>
 
-        <button class="big-play" id="bigPlay" aria-label="Play with sound">
-          <span class="led"></span>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg>
-          <span>Play · sound on</span>
+        <p class="offline-note" id="offlineNote" hidden>
+          The live stream is offline right now. While you wait, watch this orientation video to learn about our journey at schwwaaa, and visit <a href="https://schwwaaa.net" target="_blank" rel="noopener">schwwaaa.net</a> for more.
+        </p>
+
+        <button class="big-play" id="bigPlay" aria-label="Watch with sound">
+          <svg class="ico-speaker" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 9.5v5h3.8L12 19V5L6.8 9.5z"/>
+            <path class="wave w1" d="M15.5 8.8a4.5 4.5 0 0 1 0 6.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path class="wave w2" d="M18.3 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <svg class="ico-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>
+          <span class="lbl">Watch</span>
         </button>
       </div>
 
@@ -503,7 +539,7 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     <table><tbody id="guideBody"></tbody></table>
   </section>
 
-  <footer>schwwaaa — shaping tomorrow ... today</footer>
+  <footer>© 2026 <a href="https://schwwaaa.net" target="_blank" rel="noopener">schwwaaa</a></footer>
 </main>
 
 <script>
@@ -1229,6 +1265,12 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
   btnFull.addEventListener('click', function () {
     if (document.fullscreenElement) { document.exitFullscreen(); } else if (glass.requestFullscreen) { glass.requestFullscreen(); }
   });
+  function syncFullscreen() {
+    btnFull.textContent = document.fullscreenElement ? 'Exit fullscreen' : 'Fullscreen';
+  }
+  document.addEventListener('fullscreenchange', syncFullscreen);
+  // iPhone Safari can't fullscreen a page section, so the button is hidden there
+  if (!glass.requestFullscreen) btnFull.hidden = true;
 
   var ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>';
   var ICON_PAUSE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5h4v15H6zM14 4.5h4v15h-4z"/></svg>';
@@ -1268,7 +1310,9 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     soundOn = true;
     video.muted = false;
     video.play();
+    $('offlineNote').hidden = true;
     if (clipOn) {
+      if (ytEnded) { ytCmd('seekTo', [0, true]); ytEnded = false; }
       ytMuted = false;
       ytPlaying = true;
       ytCmd('unMute');
@@ -1296,35 +1340,74 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
   var ytClip = $('ytClip');
   var ytMuted = true;
   var ytPlaying = true;
+  var ytEnded = false;
 
   function ytEmbedUrl() {
     var id = CONFIG.offlineYouTube;
     return 'https://www.youtube.com/embed/' + id +
-      '?enablejsapi=1&autoplay=1&mute=1&loop=1&playlist=' + id +
-      '&controls=0&rel=0&modestbranding=1&playsinline=1&origin=' + encodeURIComponent(location.origin);
+      '?enablejsapi=1&controls=0&rel=0&modestbranding=1&playsinline=1&origin=' + encodeURIComponent(location.origin);
   }
 
-  function ytCmd(func) {
+  function ytCmd(func, args) {
     if (!ytClip.contentWindow) return;
-    ytClip.contentWindow.postMessage(JSON.stringify({ event: 'command', func: func, args: [] }), 'https://www.youtube.com');
+    ytClip.contentWindow.postMessage(JSON.stringify({ event: 'command', func: func, args: args || [] }), 'https://www.youtube.com');
+  }
+
+  function setBigLabel(text) { bigPlay.querySelector('.lbl').textContent = text; }
+
+  // ask the player to report its state, so we know when the video ends
+  ytClip.addEventListener('load', function () {
+    if (ytClip.contentWindow) ytClip.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 'ytClip', channel: 'widget' }), 'https://www.youtube.com');
+  });
+
+  window.addEventListener('message', function (e) {
+    if (e.origin !== 'https://www.youtube.com' || e.source !== ytClip.contentWindow) return;
+    var data = e.data;
+    if (typeof data === 'string') { try { data = JSON.parse(data); } catch (err) { return; } }
+    if (!data) return;
+    var state = data.event === 'onStateChange' ? data.info
+      : (data.event === 'infoDelivery' && data.info ? data.info.playerState : undefined);
+    if (state === undefined || !clipOn) return;
+    if (state === 0) replayEnded();
+    else if (state === 1) { ytPlaying = true; ytEnded = false; syncClipButtons(); }
+    else if (state === 2) { ytPlaying = false; syncClipButtons(); }
+  });
+
+  // when the video ends, the note and the Play button come back
+  function replayEnded() {
+    ytPlaying = false;
+    ytEnded = true;
+    bigPlay.classList.remove('leaving');
+    bigPlay.hidden = false;
+    glass.classList.add('ready');
+    $('offlineNote').hidden = false;
+    syncClipButtons();
   }
 
   function playClip() {
     if (clipOn) return;
     clipOn = true;
-    ytMuted = !soundOn;
-    ytPlaying = true;
+    // nothing starts by itself: the launch button, or Play, starts the video with sound
+    ytMuted = true;
+    ytPlaying = false;
     if (!ytClip.getAttribute('src')) ytClip.src = ytEmbedUrl();
-    glass.classList.add('yt');
-    if (!soundOn) glass.classList.add('ready');
-    glass.classList.add('on-air');
+    glass.classList.add('yt', 'ready', 'on-air');
+    bigPlay.classList.add('yt');
+    setBigLabel('Play');
+    ytEnded = false;
+    bigPlay.hidden = false;
+    $('offlineNote').hidden = false;
+    syncClipButtons();
     setState('offline');
   }
 
   function stopClip() {
     clipOn = false;
     glass.classList.remove('yt');
+    bigPlay.classList.remove('yt');
+    setBigLabel('Watch');
     ytClip.removeAttribute('src');
+    $('offlineNote').hidden = true;
   }
 
   // Checks the live playlist without touching the picture: Owncast's offline playlist ends with ENDLIST.
@@ -1348,8 +1431,9 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     // state: 'searching' | 'live' | 'offline'
     var live = state === 'live';
     glass.classList.toggle('offline', state === 'offline' && !clipOn);
-    signal.textContent = live ? 'LIVE' : clipOn ? 'REPLAY' : state === 'offline' ? 'OFFLINE' : 'SEARCHING';
-    signal.classList.toggle('off', !live);
+    signal.textContent = live ? 'LIVE' : state === 'offline' ? 'OFFLINE' : 'SEARCHING';
+    signal.classList.toggle('live', live);
+    signal.classList.toggle('offline', state === 'offline');
 
     // the deck works for the live feed and for the replay clip
     [btnPause, btnMute, btnFull].forEach(function (b) { b.disabled = !(live || clipOn); });
@@ -1485,12 +1569,12 @@ footer { margin-top: 48px; text-align: center; font-size: 10px; letter-spacing: 
     function next() {
       if (i >= BOOT_LINES.length) {
         out.innerHTML += '<span class="cursor"></span>';
-        setTimeout(done, 450);
+        setTimeout(done, 320);
         return;
       }
       out.innerHTML += BOOT_LINES[i] + '\n';
       i++;
-      setTimeout(next, 280);
+      setTimeout(next, 200);
     }
     next();
   }
