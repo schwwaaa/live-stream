@@ -49,7 +49,7 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
   transition: opacity 0.9s ease, visibility 0.9s;
 }
 #boot.done { opacity: 0; visibility: hidden; }
-#boot pre { margin: 0; font: 13px/1.7 var(--mono); color: var(--dim); white-space: pre-wrap; max-width: 680px; }
+#boot pre { margin: 0; font: 13px/1.7 'Courier New', Courier, monospace; color: var(--dim); white-space: pre-wrap; max-width: 680px; }
 #boot .ok { color: var(--ice); }
 #boot .cursor { display: inline-block; width: 8px; height: 14px; background: var(--ice); vertical-align: -2px; animation: blink 0.9s steps(1) infinite; }
 @keyframes blink { 50% { opacity: 0; } }
@@ -84,8 +84,9 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 
 .label {
   display: flex; justify-content: space-between; align-items: center; gap: 10px;
-  height: 30px; font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); padding: 0 2px;
+  height: 30px; font-family: var(--sans); font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); padding: 0 2px;
 }
+#feedName, #signal { font-family: var(--sans); text-transform: none; letter-spacing: 0.02em; font-size: 13px; font-weight: 500; }
 #signal { display: inline-flex; align-items: center; gap: 8px; color: var(--dim); }
 #signal::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 #signal.live { color: #6bd66b; }
@@ -123,6 +124,23 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 .offline-card button:hover { background: #fff; color: #000; }
 .offline-note a { color: var(--bone); font-weight: 500; border-bottom: 1px solid var(--faint); transition: color 0.2s, border-color 0.2s; }
 .offline-note a:hover { color: var(--ice); border-bottom-color: var(--ice); }
+
+/* the offline notice's emphasis: a pulsing red word, a bold gold shimmer on the video name */
+.offline-card .off-word { background: var(--bone); color: var(--ink); font-weight: 700; padding: 1px 7px; border-radius: 3px; }
+.offline-card .video-name { color: var(--bone); font-weight: 700; }
+.offline-card .off-lead { margin: 0; }
+.offline-card .off-face { display: block; width: 56px; height: 56px; margin: 16px auto 20px; color: var(--bone); }
+.offline-card .strong {
+  font-weight: 700; color: var(--ice);
+  background: linear-gradient(90deg, #5fc3dc 0%, #9fe8ff 25%, #e6fbff 50%, #9fe8ff 75%, #5fc3dc 100%);
+  background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: iceShimmer 3s linear infinite;
+}
+.offline-card .off-brand { text-align: center; margin: 0 0 18px; }
+.offline-card .off-brand img { width: 120px; height: auto; display: block; margin: 0 auto; filter: invert(1); }
+.offline-card .off-brand p { margin: 6px 0 0; font: 12px var(--mono); color: var(--dim); letter-spacing: 0.04em; }
+@keyframes iceShimmer { from { background-position: 200% center; } to { background-position: -200% center; } }
+@media (prefers-reduced-motion: reduce) { .offline-card .strong { animation: none; } }
 
 /* the replay: a YouTube player on the same stage, shown only while offline */
 .yt-clip { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; z-index: 1; display: none; background: #000; }
@@ -335,7 +353,7 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
 /* ============ the ? modal ============ */
 .modal {
   border: 1px solid var(--faint); border-radius: 8px; background: var(--ink-2); color: var(--bone);
-  padding: 52px 44px 30px; max-width: min(640px, 92vw); width: 100%;
+  padding: 52px 44px 30px; max-width: min(800px, 92vw); width: 100%;
   box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
 }
 .modal::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(3px); }
@@ -344,8 +362,13 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
 .modal-brand { text-align: center; margin: 0 0 22px; }
 .modal-brand img { width: 160px; height: auto; display: block; margin: 0 auto; filter: invert(1); }
 .modal-brand .modal-tagline { margin: 6px 0 0; font: 13px var(--mono); color: var(--dim); letter-spacing: 0.04em; }
-.modal .blurb { text-align: center; margin: 0; }
+.modal .blurb { text-align: center; text-wrap: balance; margin: 0; max-width: none; }
+.modal .blurb .beats { text-align: center; }
 .modal .links { justify-content: center; }
+/* desktop: all the links on one row */
+@media (min-width: 861px) {
+  .modal .links { flex-wrap: nowrap; gap: 12px 26px; white-space: nowrap; }
+}
 
 /* ============ small screens ============ */
 /* the tools panel starts level with the video, below the status label */
@@ -441,7 +464,22 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
 
   <div class="offline-note" id="offlineNote" hidden>
     <div class="offline-card">
-      <p>The live stream is offline right now. While you wait, watch this orientation video to learn about your journey with schwwaaa, and visit <a href="https://schwwaaa.net" target="_blank" rel="noopener">schwwaaa.net</a> for more.</p>
+      <div class="off-brand">
+        <img src="https://schwwaaa.net/img/schwwaaa-trans.png" alt="schwwaaa">
+        <p>𝒮𝒽𝒶𝓅𝒾𝓃𝑔 𝓉𝑜𝓂𝑜𝓇𝓇𝑜𝓌 ... 𝓉𝑜𝒹𝒶𝓎™</p>
+      </div>
+      <p class="off-lead">The live stream is <span class="off-word">offline</span> right now.</p>
+      <svg class="off-face" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M22 24 A11 11 0 0 0 22 40"/>
+          <path d="M42 24 A11 11 0 0 1 42 40"/>
+          <path d="M14 16 A24 24 0 0 0 14 48" opacity="0.4"/>
+          <path d="M50 16 A24 24 0 0 1 50 48" opacity="0.4"/>
+        </g>
+        <circle cx="32" cy="32" r="4" fill="currentColor"/>
+        <path d="M12 54 L52 10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+      <p>While you wait, watch our <span class="video-name">Orientation Video</span> to learn more about your journey with <span class="strong">schwwaaa</span>, and visit <a href="https://schwwaaa.net" target="_blank" rel="noopener"><strong>schwwaaa.net</strong></a> for information about our projects and upcoming events.</p>
       <button id="btnOfflineOk">OK</button>
     </div>
   </div>
