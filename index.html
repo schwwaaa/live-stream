@@ -508,8 +508,8 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
           <label class="row">Colour split <input type="range" data-k="split" min="0" max="1" step="0.01"><output></output></label>
           <label class="row">Glow <input type="range" data-k="glow" min="0" max="1" step="0.01"><output></output></label>
           <label class="row">Edges <input type="range" data-k="edges" min="0" max="1" step="0.01"><output></output></label>
-          <label class="row">Pixelate <input type="range" data-k="pixelate" min="0" max="1" step="0.01"><output></output></label>
-          <label class="row">Kaleidoscope <input type="range" data-k="kaleido" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row" data-live-only>Pixelate <input type="range" data-k="pixelate" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row" data-live-only>Kaleidoscope <input type="range" data-k="kaleido" min="0" max="1" step="0.01"><output></output></label>
           <div class="toggles">
             <button class="btn" data-toggle="invert">Invert</button>
             <button class="btn" data-toggle="flipH">Flip ↔</button>
@@ -911,18 +911,57 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
     }
   }
 
+  // Kaleidoscope: each pixel is mapped into one mirrored wedge of a wheel. The slider adds wedges,
+  // spin, swirl and zoom, so the pattern changes across its range.
+  var srcC = document.createElement('canvas');
+  var srcCtx = srcC.getContext('2d', { willReadFrequently: true });
+
+  function drawKaleido(cw, ch) {
+    var amt = lens.kaleido;
+    srcC.width = cw; srcC.height = ch;
+    srcCtx.drawImage(video, 0, 0, cw, ch);
+    var src;
+    try { src = srcCtx.getImageData(0, 0, cw, ch).data; } catch (err) { return false; }
+    var out = fxctx.createImageData(cw, ch), o = out.data;
+    var N = Math.round(3 + amt * 9);
+    var seg = Math.PI * 2 / N;
+    var spin = (performance.now() / 1000) * (0.15 + amt * 0.6);
+    var twist = amt * 2.5;
+    var zoom = 0.6 + amt * 0.8;
+    var cx = cw / 2, cy = ch / 2, R = Math.min(cw, ch) / 2;
+    for (var y = 0; y < ch; y++) {
+      for (var x = 0; x < cw; x++) {
+        var dx = x - cx, dy = y - cy;
+        var r = Math.sqrt(dx * dx + dy * dy) / R;
+        var a = Math.atan2(dy, dx) + spin + twist * r;
+        a = ((a % seg) + seg) % seg;
+        if (a > seg / 2) a = seg - a;
+        var rr = (r * zoom) % 1;
+        var sx = Math.min(cw - 1, Math.max(0, Math.round(cx + Math.cos(a) * rr * R)));
+        var sy = Math.min(ch - 1, Math.max(0, Math.round(cy + Math.sin(a) * rr * R)));
+        var si = (sy * cw + sx) * 4, oi = (y * cw + x) * 4;
+        o[oi] = src[si]; o[oi + 1] = src[si + 1]; o[oi + 2] = src[si + 2]; o[oi + 3] = 255;
+      }
+    }
+    fxctx.putImageData(out, 0, 0);
+    return true;
+  }
+
   function fxLoop() {
     if (!fxOn) { fxRunning = false; return; }
     var vw = video.videoWidth, vh = video.videoHeight;
     if (vw && vh && video.readyState >= 2) {
-      var block = 1 + lens.pixelate * 40;
+      // the kaleidoscope works at no more than 320 pixels wide, so it stays smooth
+      var block = Math.max(1 + lens.pixelate * 40, vw / 320);
       var cw = Math.max(24, Math.round(vw / block)), ch = Math.round(cw * vh / vw);
       if (fxc.width !== cw || fxc.height !== ch) { fxc.width = cw; fxc.height = ch; }
       var z = 1 + lens.kaleido * 0.6;
       var sw = vw / z, sh = vh / z, sx = (vw - sw) / 2, sy = (vh - sh) / 2;
       var hw = cw / 2, hh = ch / 2;
-      if (lens.kaleido > 0) {
-        // four mirrored tiles, so the picture folds into a symmetrical pattern
+      if (lens.kaleido > 0 && drawKaleido(cw, ch)) {
+        // drawn as a wheel of wedges
+      } else if (lens.kaleido > 0) {
+        // fallback where the browser won't read the frame: four mirrored tiles, so the picture folds into a symmetrical pattern
         fxctx.drawImage(video, sx, sy, sw, sh, 0, 0, hw, hh);
         fxctx.save(); fxctx.translate(cw, 0); fxctx.scale(-1, 1);
         fxctx.drawImage(video, sx, sy, sw, sh, 0, 0, hw, hh); fxctx.restore();
@@ -1686,10 +1725,12 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
     // state: 'searching' | 'live' | 'offline'
     var live = state === 'live';
     glass.classList.toggle('offline', state === 'offline' && !clipOn);
+    document.querySelectorAll('[data-live-only]').forEach(function (r) { r.hidden = !live; });
     signal.textContent = live ? 'LIVE' : state === 'offline' ? 'OFFLINE' : 'SEARCHING';
     signal.classList.toggle('live', live);
     signal.classList.toggle('offline', state === 'offline');
 
+    syncFx();
     // the deck works for the live feed and for the replay clip
     [btnPause, btnMute, btnFull].forEach(function (b) { b.disabled = !(live || clipOn); });
 
