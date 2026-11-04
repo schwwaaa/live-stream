@@ -6,7 +6,7 @@
 <title>schwwaaa — archive terminal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js"></script>
 <style>
 /* ============ tokens ============ */
@@ -18,7 +18,7 @@
   --dim: rgba(235, 231, 220, 0.6);
   --faint: rgba(235, 231, 220, 0.12);
   --ice: #9fe8ff;
-  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --sans: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono: 'Lucida Console', Monaco, 'Courier New', monospace;
   --crop: 54px;
 }
@@ -83,7 +83,7 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 
 .label {
   display: flex; justify-content: space-between; align-items: center; gap: 10px;
-  font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); padding: 0 2px 9px;
+  height: 30px; font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); padding: 0 2px;
 }
 #signal { display: inline-flex; align-items: center; gap: 8px; color: var(--dim); }
 #signal::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
@@ -120,19 +120,10 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 .glass.yt video { visibility: hidden; }
 /* effects layers: all sit above the picture and never block it */
 .fx { position: absolute; inset: 0; pointer-events: none; }
-.fx-scan {
-  z-index: 3; opacity: 0; mix-blend-mode: screen;
-  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 3px);
-}
-.glass.scanned .fx-scan { opacity: 1; }
-.fx-grain {
-  z-index: 3; opacity: 0; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-}
-.fx-vig {
-  z-index: 4; opacity: 0;
-  background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 0, 0, 0.9) 100%);
-}
+.fx-tint { z-index: 3; opacity: 0; mix-blend-mode: color; }
+.fx-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: none; z-index: 1; image-rendering: pixelated; background: #000; }
+.glass.fxc .fx-canvas { display: block; }
+.glass.fxc video { visibility: hidden; }
 .fx-flick { z-index: 4; background: #000; opacity: 0; }
 .glass.flicker .fx-flick { animation: flicker 6s steps(1) infinite; }
 @keyframes flicker { 0%, 92%, 100% { opacity: 0; } 93% { opacity: 0.08; } 95% { opacity: 0; } }
@@ -197,7 +188,7 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 .deck .clock { margin-left: auto; font-size: 11px; color: var(--dim); letter-spacing: 0.08em; font-variant-numeric: tabular-nums; }
 
 /* the static about: blurb and links, directly under the deck */
-.about { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--faint); text-align: center; }
+.about { max-width: 940px; margin: 22px auto 0; padding-top: 20px; border-top: 1px solid var(--faint); text-align: center; }
 .blurb { max-width: 80ch; margin: 0 auto; font-size: 13px; line-height: 1.7; color: var(--dim); font-weight: 300; }
 .blurb strong { color: var(--bone); font-weight: 500; }
 .blurb .beats { display: block; margin-top: 8px; color: var(--dim); font-weight: 300; letter-spacing: 0.02em; }
@@ -215,7 +206,7 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 .links a:hover, .links a:focus-visible { color: var(--ice); border-bottom-color: var(--ice); outline: 0; }
 
 /* chat below: under the blurb and links; the header of the embed is cropped away */
-.chat-below { margin-top: 22px; }
+.chat-below { max-width: 940px; margin: 22px auto 0; }
 .chat-slot { position: relative; overflow: hidden; height: 100%; }
 .chat-slot iframe { position: absolute; left: 0; top: calc(var(--crop) * -1); width: 100%; height: calc(100% + var(--crop)); border: 0; display: block; background: var(--ink-2); }
 .chat-below .chat-slot { height: 520px; border: 1px solid var(--faint); border-radius: 6px; }
@@ -244,9 +235,6 @@ main { position: relative; z-index: 1; max-width: 1260px; margin: 0 auto; paddin
 .pane h3 { margin: 0 0 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ice); }
 .pane .note { margin: 12px 0 0; color: var(--dim); line-height: 1.6; font-size: 11px; }
 
-.presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.presets button { border: 1px solid var(--faint); padding: 5px 9px; font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); border-radius: 4px; }
-.presets button.on, .presets button:hover { color: var(--ice); border-color: var(--ice); }
 
 .pane label.row { display: grid; grid-template-columns: 92px 1fr 46px; align-items: center; gap: 8px; margin: 9px 0; color: var(--dim); font-size: 11px; letter-spacing: 0.04em; }
 .pane output { text-align: right; color: var(--bone); font-variant-numeric: tabular-nums; }
@@ -281,9 +269,42 @@ input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border: 0; bord
 .swatches button { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--faint); }
 .swatches button:hover { outline: 1px solid var(--ice); outline-offset: 2px; }
 
+/* paint: icon tools, no words */
+.switch-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.switch-label { font-size: 11px; letter-spacing: 0.04em; color: var(--dim); }
+.switch.on + .switch-label { color: var(--ice); }
+.switch {
+  position: relative; width: 36px; height: 20px; padding: 0; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--faint); background: transparent; transition: border-color 0.2s, background 0.2s;
+}
+.switch::after {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--dim); transition: transform 0.2s ease, background 0.2s;
+}
+.switch:hover { border-color: var(--ice); }
+.switch.on { border-color: var(--ice); background: rgba(159, 232, 255, 0.14); }
+.switch.on::after { transform: translateX(16px); background: var(--ice); }
+.tool-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.tool-ico {
+  width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--faint); border-radius: 6px; color: var(--dim); background: transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+.tool-ico svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#btnFillShape svg { fill: currentColor; stroke: none; }
+.tool-ico:hover:not(:disabled), .tool-ico.on { color: var(--ice); border-color: var(--ice); }
+.tool-ico:disabled { opacity: 0.3; cursor: default; }
+
+/* share: the part checkboxes and the load choices */
+.checks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.checks label { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border: 1px solid var(--faint); border-radius: 5px; color: var(--bone); font-size: 12px; cursor: pointer; transition: border-color 0.2s; }
+.checks label:hover { border-color: var(--ice); }
+.checks input { accent-color: var(--ice); margin: 0; }
+.pane h3.sub { margin-top: 20px; }
+
 /* ============ programming ============ */
 .guide { margin-top: 56px; border-top: 1px solid var(--faint); padding-top: 22px; }
-.guide, .guide h3 { font-family: 'Fraunces', Georgia, serif; }
+.guide, .guide h3 { font-family: var(--sans); }
 .guide h3 { margin: 0 0 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ice); display: flex; justify-content: space-between; }
 .guide h3 span { color: var(--dim); font-weight: 500; }
 .guide table { width: 100%; border-collapse: collapse; font-size: 15px; }
@@ -309,10 +330,18 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
 .modal::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(3px); }
 .modal .close { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--faint); color: var(--dim); }
 .modal .close:hover { color: var(--ice); border-color: var(--ice); }
+.modal-brand { text-align: center; margin: 0 0 22px; }
+.modal-brand img { width: 160px; height: auto; display: block; margin: 0 auto; filter: invert(1); }
+.modal-brand .modal-tagline { margin: 6px 0 0; font: 13px var(--mono); color: var(--dim); letter-spacing: 0.04em; }
 .modal .blurb { text-align: center; margin: 0; }
 .modal .links { justify-content: center; }
 
 /* ============ small screens ============ */
+/* the tools panel starts level with the video, below the status label */
+@media (min-width: 861px) {
+  .drawer { margin-top: 30px; }
+}
+
 @media (max-width: 860px) {
   main { padding: 28px 16px 48px; }
   .big-play { top: auto; bottom: 10px; height: 46px; transform: translateX(-50%); }
@@ -335,6 +364,42 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="posterize" color-interpolation-filters="sRGB">
+    <feComponentTransfer>
+      <feFuncR id="pzR" type="discrete" tableValues="0 1"/>
+      <feFuncG id="pzG" type="discrete" tableValues="0 1"/>
+      <feFuncB id="pzB" type="discrete" tableValues="0 1"/>
+    </feComponentTransfer>
+  </filter>
+  <filter id="split" color-interpolation-filters="sRGB" x="-5%" y="-5%" width="110%" height="110%">
+    <feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
+    <feOffset id="spR" in="r" dx="0" dy="0" result="r2"/>
+    <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="g"/>
+    <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
+    <feOffset id="spB" in="b" dx="0" dy="0" result="b2"/>
+    <feBlend in="r2" in2="g" mode="screen" result="rg"/>
+    <feBlend in="rg" in2="b2" mode="screen"/>
+  </filter>
+  <filter id="glow" color-interpolation-filters="sRGB">
+    <feGaussianBlur id="glBlur" in="SourceGraphic" stdDeviation="2" result="blur"/>
+    <feComponentTransfer in="blur" result="bright">
+      <feFuncR id="glR" type="linear" slope="1"/>
+      <feFuncG id="glG" type="linear" slope="1"/>
+      <feFuncB id="glB" type="linear" slope="1"/>
+    </feComponentTransfer>
+    <feBlend in="SourceGraphic" in2="bright" mode="screen"/>
+  </filter>
+  <filter id="edges" color-interpolation-filters="sRGB">
+    <feColorMatrix type="saturate" values="0" result="grey"/>
+    <feConvolveMatrix in="grey" order="3" kernelMatrix="-1 -1 -1 -1 8 -1 -1 -1 -1" divisor="1" bias="0" preserveAlpha="true" result="edge"/>
+    <feComponentTransfer in="edge">
+      <feFuncR id="edR" type="linear" slope="1"/>
+      <feFuncG id="edG" type="linear" slope="1"/>
+      <feFuncB id="edB" type="linear" slope="1"/>
+    </feComponentTransfer>
+  </filter>
+</svg>
 
 <!-- boot sequence: a terminal waking up -->
 <div id="boot" aria-hidden="true"><pre id="bootText"></pre></div>
@@ -344,6 +409,10 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
 <dialog class="modal" id="aboutModal" aria-labelledby="aboutTitle">
   <button class="close" id="btnAboutClose" aria-label="Close">×</button>
   <h2 id="aboutTitle" class="sr-only" style="position:absolute;left:-9999px">About schwwaaa</h2>
+  <div class="modal-brand">
+    <img src="https://schwwaaa.net/img/schwwaaa-trans.png" alt="schwwaaa">
+    <p class="modal-tagline">𝒮𝒽𝒶𝓅𝒾𝓃𝑔 𝓉𝑜𝓂𝑜𝓇𝓇𝑜𝓌 ... 𝓉𝑜𝒹𝒶𝓎™</p>
+  </div>
   <p class="blurb">
     <strong>schwwaaa</strong> is a global media production and software development company founded in 2015 with the goal of making creating things easier for everyone.
     <span class="beats">We build. We iterate. We inspire. We shape tomorrow. Today.</span>
@@ -372,10 +441,9 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
 
       <div class="glass flicker" id="glass">
         <video id="video" playsinline muted></video>
+        <canvas class="fx-canvas" id="fxCanvas"></canvas>
         <iframe class="yt-clip" id="ytClip" title="Replay" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>
-        <div class="fx fx-scan"></div>
-        <div class="fx fx-grain" id="fxGrain"></div>
-        <div class="fx fx-vig" id="fxVig"></div>
+        <div class="fx fx-tint" id="fxTint"></div>
         <div class="fx fx-flick"></div>
         <canvas class="paint" id="paint" aria-label="Paint on the picture"></canvas>
         <input class="paint-text" id="paintText" hidden aria-label="Text to place">
@@ -411,6 +479,119 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
         <span class="clock" id="clock"></span>
       </div>
 
+
+    </div>
+
+    <aside class="drawer" id="drawer" aria-label="Tools">
+      <div class="drawer-inner">
+        <div class="tabs" role="tablist">
+          <button role="tab" data-tab="lens">Lens</button>
+          <button role="tab" data-tab="audio">Audio</button>
+          <button role="tab" data-tab="paint">Paint</button>
+          <button role="tab" data-tab="chat" id="tabChat">Chat</button>
+          <button role="tab" data-tab="share">Share</button>
+        </div>
+
+        <div class="pane" data-pane="lens">
+          <h3>Lens</h3>
+          <label class="row">Contrast <input type="range" data-k="contrast" min="0.5" max="2" step="0.01"><output></output></label>
+          <label class="row">Saturation <input type="range" data-k="saturate" min="0" max="2" step="0.01"><output></output></label>
+          <label class="row">Brightness <input type="range" data-k="brightness" min="0.5" max="1.5" step="0.01"><output></output></label>
+          <label class="row">Hue <input type="range" data-k="hue" min="0" max="360" step="1"><output></output></label>
+          <label class="row">Sepia <input type="range" data-k="sepia" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row">Greyscale <input type="range" data-k="grayscale" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row">Blur <input type="range" data-k="blur" min="0" max="8" step="0.1"><output></output></label>
+          <label class="row">Zoom <input type="range" data-k="zoom" min="1" max="2" step="0.01"><output></output></label>
+          <label class="row">Posterize <input type="range" data-k="posterize" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row">Tint <input type="range" data-k="tint" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row">Tint hue <input type="range" data-k="tintHue" min="0" max="360" step="1"><output></output></label>
+          <label class="row">Colour split <input type="range" data-k="split" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row">Glow <input type="range" data-k="glow" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row">Edges <input type="range" data-k="edges" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row">Pixelate <input type="range" data-k="pixelate" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row">Kaleidoscope <input type="range" data-k="kaleido" min="0" max="1" step="0.01"><output></output></label>
+          <div class="toggles">
+            <button class="btn" data-toggle="invert">Invert</button>
+            <button class="btn" data-toggle="flipH">Flip ↔</button>
+            <button class="btn" data-toggle="flipV">Flip ↕</button>
+          </div>
+          <div class="btn-row">
+            <button class="btn" id="btnResetPicture">Reset picture</button>
+          </div>
+        </div>
+
+        <div class="pane" data-pane="audio" hidden>
+          <h3>Audio</h3>
+          <p class="note" id="audioNote">Sound effects start when you press play.</p>
+          <label class="row">Volume <input type="range" data-k="volume" min="0" max="1.5" step="0.01"><output></output></label>
+          <label class="row">High-pass <input type="range" data-k="highpass" min="20" max="2000" step="5"><output></output></label>
+          <label class="row">Low-pass <input type="range" data-k="lowpass" min="200" max="20000" step="10"><output></output></label>
+          <label class="row">Bass <input type="range" data-k="bass" min="-12" max="12" step="0.5"><output></output></label>
+          <label class="row">Mid <input type="range" data-k="mid" min="-12" max="12" step="0.5"><output></output></label>
+          <label class="row">Treble <input type="range" data-k="treble" min="-12" max="12" step="0.5"><output></output></label>
+          <label class="row">Pan <input type="range" data-k="pan" min="-1" max="1" step="0.01"><output></output></label>
+          <label class="row">Delay <input type="range" data-k="echo" min="0" max="1" step="0.01"><output></output></label>
+          <label class="row">Delay time <input type="range" data-k="echoTime" min="0.05" max="1" step="0.01"><output></output></label>
+          <label class="row">Feedback <input type="range" data-k="feedback" min="0" max="0.9" step="0.01"><output></output></label>
+          <label class="row">Drive <input type="range" data-k="drive" min="0" max="1" step="0.01"><output></output></label>
+          <div class="btn-row"><button class="btn" id="btnResetSound">Reset sound</button></div>
+        </div>
+
+        <div class="pane" data-pane="paint" hidden>
+          <h3>Paint</h3>
+          <div class="tool-row" id="tools" role="group" aria-label="Paint tools"><button class="tool-ico on" data-tool-paint="brush" title="Brush" aria-label="Brush"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4L16 5l3 3L8 19z"/></svg></button><button class="tool-ico" data-tool-paint="eraser" title="Eraser" aria-label="Eraser"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18h11"/><path d="M5 14l7-7 6 6-5 5H8z"/></svg></button><button class="tool-ico" data-tool-paint="line" title="Line" aria-label="Line"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19L19 5"/></svg></button><button class="tool-ico" data-tool-paint="rect" title="Box" aria-label="Box"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="12"/></svg></button><button class="tool-ico" data-tool-paint="ellipse" title="Oval" aria-label="Oval"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="8" ry="6"/></svg></button><button class="tool-ico" data-tool-paint="bucket" title="Fill" aria-label="Fill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11l6-6 7 7-6 6z"/><path d="M19 15c0 1.5-1 2.5-2 2.5s-2-1-2-2.5"/></svg></button><button class="tool-ico" data-tool-paint="text" title="Text" aria-label="Text"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12M12 6v13"/></svg></button></div>
+          <div class="switch-row"><button class="switch" id="btnFillShape" role="switch" aria-checked="false" title="Solid shapes" aria-label="Solid shapes"></button><span class="switch-label" id="fillLabel">Outline</span></div>
+                    <div class="colorline">
+            <button class="swatch" id="swatch" aria-label="Choose colour" aria-expanded="false" aria-controls="wheel"></button>
+            <span>Colour</span>
+          </div>
+          <div class="wheel" id="wheel" hidden>
+            <canvas id="wheelCanvas" width="180" height="180" aria-label="Colour wheel"></canvas>
+            <label class="row">Brightness <input type="range" id="wheelV" min="0" max="1" step="0.01"></label>
+            <div class="hex-row">
+              <input class="hex" id="wheelHex" maxlength="7" aria-label="Hex colour">
+            </div>
+            <div class="swatches" id="swatches"></div>
+          </div>
+          <label class="row">Size <input type="range" id="paintSize" min="1" max="40" step="1" value="6"><output>6</output></label>
+          <label class="row">Opacity <input type="range" id="paintOpacity" min="0.1" max="1" step="0.05" value="1"><output>1.00</output></label>
+          <div class="tool-row"><button class="tool-ico" id="btnUndo" disabled title="Undo (Ctrl or Cmd + Z)" aria-label="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button><button class="tool-ico" id="btnClear" title="Clear" aria-label="Clear"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M9 7V5h6v2M7 7l1 13h8l1-13"/></svg></button></div>
+        </div>
+
+        <div class="pane" data-pane="chat" hidden>
+          <h3>Chat</h3>
+          <div class="btn-row">
+            <button class="btn" id="btnChatBelow">Move below</button>
+          </div>
+          <p class="note">Chat appears when the feed is live. Move it below the stage to read it bigger.</p>
+        </div>
+
+        <div class="pane" data-pane="share" hidden>
+          <h3>Share</h3>
+          <p class="note">Save what you've set up as one file, or load someone else's. Choose which parts go in.</p>
+          <div class="checks" id="shareChecks">
+            <label><input type="checkbox" data-part="picture" checked> Picture</label>
+            <label><input type="checkbox" data-part="audio" checked> Audio</label>
+            <label><input type="checkbox" data-part="paint" checked> Paint</label>
+          </div>
+          <div class="btn-row"><button class="btn" id="btnSave">Save experience</button></div>
+
+          <h3 class="sub">Load</h3>
+          <div class="btn-row">
+            <label class="btn" for="fileLoad">Choose file</label>
+            <input class="file-in" type="file" id="fileLoad" accept="application/json,.json">
+          </div>
+          <div class="checks" id="loadChecks" hidden></div>
+          <div class="btn-row" id="loadActions" hidden>
+            <button class="btn on" id="btnApply">Apply</button>
+            <button class="btn" id="btnLoadCancel">Cancel</button>
+          </div>
+          <p class="note" id="loadNote"></p>
+        </div>
+      </div>
+    </aside>
+  </section>
+
       <section class="about" aria-label="About">
         <p class="blurb">
           <strong>schwwaaa</strong> is a global media production and software development company founded in 2015 with the goal of making creating things easier for everyone.
@@ -435,104 +616,6 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
         </div>
         <div class="chat-slot" id="chatSlotBelow"></div>
       </section>
-    </div>
-
-    <aside class="drawer" id="drawer" aria-label="Tools">
-      <div class="drawer-inner">
-        <div class="tabs" role="tablist">
-          <button role="tab" data-tab="lens">Lens</button>
-          <button role="tab" data-tab="audio">Audio</button>
-          <button role="tab" data-tab="paint">Paint</button>
-          <button role="tab" data-tab="chat" id="tabChat">Chat</button>
-        </div>
-
-        <div class="pane" data-pane="lens">
-          <h3>Lens</h3>
-          <div class="presets" id="presets"></div>
-          <label class="row">Contrast <input type="range" data-k="contrast" min="0.5" max="2" step="0.01"><output></output></label>
-          <label class="row">Saturation <input type="range" data-k="saturate" min="0" max="2" step="0.01"><output></output></label>
-          <label class="row">Brightness <input type="range" data-k="brightness" min="0.5" max="1.5" step="0.01"><output></output></label>
-          <label class="row">Hue <input type="range" data-k="hue" min="0" max="360" step="1"><output></output></label>
-          <label class="row">Sepia <input type="range" data-k="sepia" min="0" max="1" step="0.01"><output></output></label>
-          <label class="row">Greyscale <input type="range" data-k="grayscale" min="0" max="1" step="0.01"><output></output></label>
-          <label class="row">Blur <input type="range" data-k="blur" min="0" max="8" step="0.1"><output></output></label>
-          <label class="row">Zoom <input type="range" data-k="zoom" min="1" max="2" step="0.01"><output></output></label>
-          <label class="row">Grain <input type="range" data-k="grain" min="0" max="1" step="0.01"><output></output></label>
-          <label class="row">Vignette <input type="range" data-k="vignette" min="0" max="1" step="0.01"><output></output></label>
-          <div class="toggles">
-            <button class="btn" data-toggle="invert">Invert</button>
-            <button class="btn" data-toggle="scan">Scan lines</button>
-            <button class="btn" data-toggle="flipH">Flip ↔</button>
-            <button class="btn" data-toggle="flipV">Flip ↕</button>
-          </div>
-          <div class="btn-row">
-            <button class="btn" id="btnReset">Reset</button>
-            <button class="btn" id="btnExport">Export JSON</button>
-            <label class="btn" for="fileImport">Import JSON</label>
-            <input class="file-in" type="file" id="fileImport" accept="application/json,.json">
-          </div>
-          <p class="note">A lens is a small JSON file of your picture and sound settings. Export one, send it to someone, and they can import it to see the room through your eyes.</p>
-        </div>
-
-        <div class="pane" data-pane="audio" hidden>
-          <h3>Audio</h3>
-          <p class="note" id="audioNote">Sound effects start when you press play.</p>
-          <label class="row">Volume <input type="range" data-k="volume" min="0" max="1.5" step="0.01"><output></output></label>
-          <label class="row">High-pass <input type="range" data-k="highpass" min="20" max="2000" step="5"><output></output></label>
-          <label class="row">Low-pass <input type="range" data-k="lowpass" min="200" max="20000" step="10"><output></output></label>
-          <label class="row">Bass <input type="range" data-k="bass" min="-12" max="12" step="0.5"><output></output></label>
-          <label class="row">Mid <input type="range" data-k="mid" min="-12" max="12" step="0.5"><output></output></label>
-          <label class="row">Treble <input type="range" data-k="treble" min="-12" max="12" step="0.5"><output></output></label>
-          <label class="row">Pan <input type="range" data-k="pan" min="-1" max="1" step="0.01"><output></output></label>
-          <label class="row">Echo <input type="range" data-k="echo" min="0" max="1" step="0.01"><output></output></label>
-          <label class="row">Echo time <input type="range" data-k="echoTime" min="0.05" max="1" step="0.01"><output></output></label>
-          <label class="row">Drive <input type="range" data-k="drive" min="0" max="1" step="0.01"><output></output></label>
-        </div>
-
-        <div class="pane" data-pane="paint" hidden>
-          <h3>Paint</h3>
-          <div class="tools" id="tools" role="group" aria-label="Paint tools">
-            <button data-tool-paint="brush" class="on">Brush</button>
-            <button data-tool-paint="eraser">Erase</button>
-            <button data-tool-paint="line">Line</button>
-            <button data-tool-paint="rect">Box</button>
-            <button data-tool-paint="ellipse">Oval</button>
-            <button data-tool-paint="bucket">Fill</button>
-            <button data-tool-paint="text">Text</button>
-          </div>
-          <div class="toggles">
-            <button class="btn" id="btnFillShape">Solid shapes</button>
-          </div>
-          <div class="colorline">
-            <button class="swatch" id="swatch" aria-label="Choose colour" aria-expanded="false" aria-controls="wheel"></button>
-            <span>Colour</span>
-          </div>
-          <div class="wheel" id="wheel" hidden>
-            <canvas id="wheelCanvas" width="180" height="180" aria-label="Colour wheel"></canvas>
-            <label class="row">Brightness <input type="range" id="wheelV" min="0" max="1" step="0.01"></label>
-            <div class="hex-row">
-              <input class="hex" id="wheelHex" maxlength="7" aria-label="Hex colour">
-            </div>
-            <div class="swatches" id="swatches"></div>
-          </div>
-          <label class="row">Size <input type="range" id="paintSize" min="1" max="40" step="1" value="6"><output>6</output></label>
-          <div class="btn-row">
-            <button class="btn" id="btnUndo" disabled>Undo</button>
-            <button class="btn" id="btnClear">Clear</button>
-          </div>
-          <p class="note">Paint stays on the picture while this tab is open. Ctrl or Cmd with Z undoes your last mark.</p>
-        </div>
-
-        <div class="pane" data-pane="chat" hidden>
-          <h3>Chat</h3>
-          <div class="btn-row">
-            <button class="btn" id="btnChatBelow">Move below</button>
-          </div>
-          <p class="note">Chat appears when the feed is live. Move it below the stage to read it bigger.</p>
-        </div>
-      </div>
-    </aside>
-  </section>
 
   <section class="guide" aria-label="Programming guide">
     <h3>Programming <span id="guideNote">guide</span></h3>
@@ -599,63 +682,31 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
     return { h: h, s: max ? d / max : 0, v: max };
   }
 
-  /* ============ picture and sound: state, presets, export and import ============ */
+  /* ============ picture and sound: state, reset, and the lens ============ */
   var LENS_DEFAULT = {
     name: 'clear',
     contrast: 1, saturate: 1, brightness: 1, hue: 0, sepia: 0, grayscale: 0, blur: 0,
-    zoom: 1, flipH: false, flipV: false, invert: false, scan: false, grain: 0, vignette: 0,
+    zoom: 1, flipH: false, flipV: false, invert: false, posterize: 0, tint: 0, tintHue: 200, split: 0, glow: 0, edges: 0, pixelate: 0, kaleido: 0,
     volume: 1, highpass: 20, lowpass: 20000, bass: 0, mid: 0, treble: 0, pan: 0,
-    echo: 0, echoTime: 0.3, drive: 0
+    echo: 0, echoTime: 0.3, feedback: 0.4, drive: 0
   };
-  var PRESETS = {
-    clear: {},
-    microfiche: { contrast: 1.35, saturate: 0, brightness: 0.95, sepia: 0.55, blur: 0.4, scan: true, grain: 0.25, vignette: 0.35 },
-    nightshift: { hue: 190, saturate: 0.6, brightness: 0.9, contrast: 1.1, vignette: 0.25 },
-    cassette: { sepia: 0.3, blur: 0.8, lowpass: 3200, bass: 4, treble: -4, saturate: 0.85, grain: 0.15, drive: 0.25, echo: 0.2 }
-  };
-  var LENS_KEYS = Object.keys(LENS_DEFAULT);
   var lens = clone(LENS_DEFAULT);
-
-  function applyPreset(name) {
-    lens = Object.assign(clone(LENS_DEFAULT), PRESETS[name] || {}, { name: name });
-    syncLensUI();
-    applyAll();
-  }
 
   function markCustom() { lens.name = 'custom'; }
 
-  function exportLens() {
-    var data = { schwwaaa_lens: 1, name: lens.name };
-    LENS_KEYS.forEach(function (k) { if (k !== 'name') data[k] = lens[k]; });
-    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'schwwaaa-lens-' + (lens.name || 'custom') + '.json';
-    a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
-  }
+  var PICTURE_KEYS = ['contrast', 'saturate', 'brightness', 'hue', 'sepia', 'grayscale', 'blur', 'zoom', 'flipH', 'flipV', 'invert', 'posterize', 'tint', 'tintHue', 'split', 'glow', 'edges', 'pixelate', 'kaleido'];
+  var AUDIO_KEYS = ['volume', 'highpass', 'lowpass', 'bass', 'mid', 'treble', 'pan', 'echo', 'echoTime', 'feedback', 'drive'];
 
-  function importLens(text) {
-    var data;
-    try { data = JSON.parse(text); } catch (e) { alert('That file is not a lens.'); return; }
-    if (!data || data.schwwaaa_lens !== 1) { alert('That file is not a lens.'); return; }
-    var next = clone(LENS_DEFAULT);
-    LENS_KEYS.forEach(function (k) { if (k in data) next[k] = data[k]; });
-    lens = next;
+  function resetKeys(keys) {
+    keys.forEach(function (k) { lens[k] = LENS_DEFAULT[k]; });
+    markCustom();
     syncLensUI();
     applyAll();
   }
+  $('btnResetPicture').addEventListener('click', function () { resetKeys(PICTURE_KEYS); });
+  $('btnResetSound').addEventListener('click', function () { resetKeys(AUDIO_KEYS); });
 
   /* ============ the controls: every slider, toggle and preset ============ */
-  var presetWrap = $('presets');
-  Object.keys(PRESETS).forEach(function (name) {
-    var b = document.createElement('button');
-    b.textContent = name;
-    b.dataset.preset = name;
-    b.addEventListener('click', function () { applyPreset(name); });
-    presetWrap.appendChild(b);
-  });
-
   var ranges = Array.prototype.slice.call(document.querySelectorAll('input[type=range][data-k]'));
   ranges.forEach(function (input) {
     input.addEventListener('input', function () {
@@ -672,9 +723,6 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
       input.value = lens[k];
       input.nextElementSibling.textContent = Number(lens[k]).toFixed(Number(input.step) < 1 ? 2 : 0);
     });
-    document.querySelectorAll('#presets button').forEach(function (b) {
-      b.classList.toggle('on', b.dataset.preset === lens.name);
-    });
     document.querySelectorAll('[data-toggle]').forEach(function (b) {
       b.classList.toggle('on', !!lens[b.dataset.toggle]);
     });
@@ -689,20 +737,213 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
       applyAll();
     });
   });
-  $('btnReset').addEventListener('click', function () { applyPreset('clear'); });
-  $('btnExport').addEventListener('click', exportLens);
-  $('fileImport').addEventListener('change', function (e) {
+  /* ============ share: one file for picture, audio and paint, with a choice of parts ============ */
+  function downloadJSON(data, name) {
+    var blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  function pickFrom(source, keys) {
+    var o = {};
+    keys.forEach(function (k) { if (source && k in source) o[k] = source[k]; });
+    return o;
+  }
+
+  function checkedParts(container, attr) {
+    var out = {};
+    document.querySelectorAll(container + ' input[' + attr + ']').forEach(function (c) {
+      out[c.getAttribute(attr)] = c.checked;
+    });
+    return out;
+  }
+
+  function saveExperience() {
+    var inc = checkedParts('#shareChecks', 'data-part');
+    if (!inc.picture && !inc.audio && !inc.paint) { $('loadNote').textContent = 'Choose at least one part to save.'; return; }
+    var data = { schwwaaa_experience: 2 };
+    if (inc.picture) data.picture = pickFrom(lens, PICTURE_KEYS);
+    if (inc.audio) data.audio = pickFrom(lens, AUDIO_KEYS);
+    if (inc.paint) data.paint = {
+      color: paintColor,
+      size: Number($('paintSize').value),
+      opacity: paintOpacity,
+      image: paint.width && paint.height ? paint.toDataURL('image/png') : null
+    };
+    downloadJSON(data, 'schwwaaa-experience-' + new Date().toISOString().slice(0, 10) + '.json');
+    $('loadNote').textContent = 'Saved.';
+  }
+
+  // Reads our experience files, and the older lens files (picture and sound together).
+  function readExperience(data) {
+    if (data && data.schwwaaa_lens === 1) {
+      return { picture: pickFrom(data, PICTURE_KEYS), audio: pickFrom(data, AUDIO_KEYS) };
+    }
+    if (data && data.schwwaaa_experience === 2) {
+      return { picture: data.picture, audio: data.audio, paint: data.paint };
+    }
+    return null;
+  }
+
+  var pendingLoad = null;
+
+  function clearPending() {
+    pendingLoad = null;
+    $('loadChecks').innerHTML = '';
+    $('loadChecks').hidden = true;
+    $('loadActions').hidden = true;
+  }
+
+  function offerLoad(parts) {
+    pendingLoad = parts;
+    var box = $('loadChecks');
+    box.innerHTML = '';
+    ['picture', 'audio', 'paint'].forEach(function (part) {
+      if (!parts[part]) return;
+      var label = document.createElement('label');
+      var input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = true;
+      input.setAttribute('data-load-part', part);
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(' ' + part.charAt(0).toUpperCase() + part.slice(1)));
+      box.appendChild(label);
+    });
+    box.hidden = false;
+    $('loadActions').hidden = false;
+    $('loadNote').textContent = 'Choose what to apply, then press Apply.';
+  }
+
+  function applyPaint(p) {
+    if (!p) return;
+    if (p.color) { paintColor = p.color; swatch.style.background = paintColor; }
+    if (p.size) { $('paintSize').value = p.size; $('paintSize').nextElementSibling.textContent = p.size; }
+    if (p.opacity !== undefined) {
+      paintOpacity = p.opacity;
+      $('paintOpacity').value = p.opacity;
+      $('paintOpacity').nextElementSibling.textContent = Number(p.opacity).toFixed(2);
+    }
+    sizePaint();
+    if (p.image) {
+      var img = new Image();
+      img.onload = function () {
+        pushUndo();
+        pctx.clearRect(0, 0, paint.width, paint.height);
+        pctx.drawImage(img, 0, 0, paint.width, paint.height);
+      };
+      img.src = p.image;
+    }
+  }
+
+  function applyPending() {
+    if (!pendingLoad) return;
+    var use = checkedParts('#loadChecks', 'data-load-part');
+    if (use.picture && pendingLoad.picture) PICTURE_KEYS.forEach(function (k) { if (k in pendingLoad.picture) lens[k] = pendingLoad.picture[k]; });
+    if (use.audio && pendingLoad.audio) AUDIO_KEYS.forEach(function (k) { if (k in pendingLoad.audio) lens[k] = pendingLoad.audio[k]; });
+    if (use.paint && pendingLoad.paint) applyPaint(pendingLoad.paint);
+    markCustom();
+    syncLensUI();
+    applyAll();
+    $('loadNote').textContent = 'Applied.';
+    clearPending();
+  }
+
+  $('btnSave').addEventListener('click', saveExperience);
+  $('fileLoad').addEventListener('change', function (e) {
     var file = e.target.files[0];
     if (!file) return;
     var reader = new FileReader();
-    reader.onload = function () { importLens(reader.result); };
+    reader.onload = function () {
+      var data = null;
+      try { data = JSON.parse(reader.result); } catch (err) { data = null; }
+      var parts = readExperience(data);
+      if (!parts) { clearPending(); $('loadNote').textContent = 'That file is not a schwwaaa experience.'; return; }
+      offerLoad(parts);
+    };
     reader.readAsText(file);
     e.target.value = '';
   });
+  $('btnApply').addEventListener('click', applyPending);
+  $('btnLoadCancel').addEventListener('click', function () { clearPending(); $('loadNote').textContent = ''; });
 
   /* ============ apply the picture effects ============ */
   var video = $('video');
   var glass = $('glass');
+
+  // zoom and flip live in one transform
+  function applyTransform() {
+    var sx = lens.zoom * (lens.flipH ? -1 : 1);
+    var sy = lens.zoom * (lens.flipV ? -1 : 1);
+    var t = 'scale(' + sx + ', ' + sy + ')';
+    video.style.transform = t;
+    fxc.style.transform = t;
+    ytClip.style.transform = t;
+  }
+
+  // colour split, glow and edges: the SVG filters take their strength from the sliders
+  function setFilterParams() {
+    var d = lens.split * 8;
+    $('spR').setAttribute('dx', d.toFixed(2));
+    $('spB').setAttribute('dx', (-d).toFixed(2));
+    $('glBlur').setAttribute('stdDeviation', (2 + lens.glow * 12).toFixed(1));
+    ['glR', 'glG', 'glB'].forEach(function (id) { $(id).setAttribute('slope', (1 + lens.glow * 1.2).toFixed(2)); });
+    ['edR', 'edG', 'edB'].forEach(function (id) { $(id).setAttribute('slope', (1 + lens.edges * 5).toFixed(2)); });
+  }
+
+  // Pixelate and kaleidoscope: the picture is drawn to a small canvas each frame and shown enlarged
+  var fxc = $('fxCanvas');
+  var fxctx = fxc.getContext('2d');
+  var fxOn = false;
+  var fxRunning = false;
+
+  function syncFx() {
+    var want = (lens.pixelate > 0 || lens.kaleido > 0) && !clipOn;
+    if (want && !fxOn) {
+      fxOn = true;
+      glass.classList.add('fxc');
+      if (!fxRunning) { fxRunning = true; fxLoop(); }
+    } else if (!want && fxOn) {
+      fxOn = false;
+      glass.classList.remove('fxc');
+    }
+  }
+
+  function fxLoop() {
+    if (!fxOn) { fxRunning = false; return; }
+    var vw = video.videoWidth, vh = video.videoHeight;
+    if (vw && vh && video.readyState >= 2) {
+      var block = 1 + lens.pixelate * 40;
+      var cw = Math.max(24, Math.round(vw / block)), ch = Math.round(cw * vh / vw);
+      if (fxc.width !== cw || fxc.height !== ch) { fxc.width = cw; fxc.height = ch; }
+      var z = 1 + lens.kaleido * 0.6;
+      var sw = vw / z, sh = vh / z, sx = (vw - sw) / 2, sy = (vh - sh) / 2;
+      var hw = cw / 2, hh = ch / 2;
+      if (lens.kaleido > 0) {
+        // four mirrored tiles, so the picture folds into a symmetrical pattern
+        fxctx.drawImage(video, sx, sy, sw, sh, 0, 0, hw, hh);
+        fxctx.save(); fxctx.translate(cw, 0); fxctx.scale(-1, 1);
+        fxctx.drawImage(video, sx, sy, sw, sh, 0, 0, hw, hh); fxctx.restore();
+        fxctx.save(); fxctx.translate(0, ch); fxctx.scale(1, -1);
+        fxctx.drawImage(video, sx, sy, sw, sh, 0, 0, hw, hh); fxctx.restore();
+        fxctx.save(); fxctx.translate(cw, ch); fxctx.scale(-1, -1);
+        fxctx.drawImage(video, sx, sy, sw, sh, 0, 0, hw, hh); fxctx.restore();
+      } else {
+        fxctx.drawImage(video, 0, 0, cw, ch);
+      }
+    }
+    requestAnimationFrame(fxLoop);
+  }
+
+  // Posterize: fewer colour levels as the slider rises, from 16 levels down to 2
+  function setPosterize() {
+    var n = Math.round(16 - lens.posterize * 14);
+    var values = [];
+    for (var i = 0; i < n; i++) values.push(n > 1 ? (i / (n - 1)).toFixed(3) : '0');
+    ['pzR', 'pzG', 'pzB'].forEach(function (id) { $(id).setAttribute('tableValues', values.join(' ')); });
+  }
 
   function applyPicture() {
     video.style.filter = [
@@ -714,16 +955,20 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
       'sepia(' + lens.sepia + ')',
       'hue-rotate(' + lens.hue + 'deg)',
       'blur(' + lens.blur + 'px)'
-    ].join(' ');
-    var sx = lens.zoom * (lens.flipH ? -1 : 1);
-    var sy = lens.zoom * (lens.flipV ? -1 : 1);
-    video.style.transform = 'scale(' + sx + ', ' + sy + ')';
-    $('fxGrain').style.opacity = lens.grain;
-    $('fxVig').style.opacity = lens.vignette;
-    glass.classList.toggle('scanned', !!lens.scan);
+    ].concat(lens.split > 0 ? ['url(#split)'] : [])
+      .concat(lens.glow > 0 ? ['url(#glow)'] : [])
+      .concat(lens.edges > 0 ? ['url(#edges)'] : [])
+      .concat(lens.posterize > 0 ? ['url(#posterize)'] : []).join(' ');
+    setPosterize();
+    setFilterParams();
+    fxc.style.filter = video.style.filter;
+    syncFx();
+    var tint = $('fxTint');
+    tint.style.background = 'hsl(' + lens.tintHue + ', 100%, 50%)';
+    tint.style.opacity = lens.tint;
+    applyTransform();
     // the replay is a YouTube frame, so it takes the same picture effects as the live feed
     ytClip.style.filter = video.style.filter;
-    ytClip.style.transform = video.style.transform;
   }
 
   function applyAll() {
@@ -772,7 +1017,7 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
       delay.connect(wet).connect(master);
       master.connect(ctx.destination);
 
-      audio = { ctx: ctx, hp: hp, lp: lp, bass: bass, mid: mid, treble: treble, drive: drive, pan: pan, delay: delay, wet: wet, master: master };
+      audio = { ctx: ctx, hp: hp, lp: lp, bass: bass, mid: mid, treble: treble, drive: drive, pan: pan, delay: delay, wet: wet, feedback: feedback, master: master };
       $('audioNote').textContent = 'Sound effects are on.';
       applyAudio();
     } catch (err) {
@@ -791,6 +1036,7 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
     audio.pan.pan.setValueAtTime(lens.pan, t);
     audio.delay.delayTime.setValueAtTime(lens.echoTime, t);
     audio.wet.gain.setValueAtTime(lens.echo, t);
+    audio.feedback.gain.setValueAtTime(lens.feedback, t);
     audio.master.gain.setValueAtTime(lens.volume, t);
     if (lens.drive !== lastDrive) {
       audio.drive.curve = driveCurve(lens.drive);
@@ -852,6 +1098,7 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
   var dragStart = null;
   var base = null;
   var swallowCanvasDown = false;
+  var paintOpacity = 1;
 
   function paintActive() { return drawerOpen && currentTab === 'paint'; }
 
@@ -916,6 +1163,7 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
     pctx.strokeStyle = paintColor;
     pctx.fillStyle = paintColor;
     pctx.lineWidth = Number($('paintSize').value);
+    pctx.globalAlpha = paintOpacity;
     pctx.lineCap = 'round';
     pctx.lineJoin = 'round';
   }
@@ -982,6 +1230,7 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
       pushUndo();
       pctx.globalCompositeOperation = 'source-over';
       pctx.fillStyle = paintColor;
+      pctx.globalAlpha = paintOpacity;
       pctx.font = (Number($('paintSize').value) * 2 + 12) + 'px ' + getComputedStyle(document.body).fontFamily;
       pctx.textBaseline = 'top';
       pctx.fillText(value, textPoint.x, textPoint.y - 12);
@@ -1048,9 +1297,15 @@ footer a:hover { color: var(--ice); border-bottom-color: var(--ice); }
   $('btnFillShape').addEventListener('click', function () {
     fillShape = !fillShape;
     $('btnFillShape').classList.toggle('on', fillShape);
+    $('btnFillShape').setAttribute('aria-checked', String(fillShape));
+    $('fillLabel').textContent = fillShape ? 'Solid' : 'Outline';
   });
   $('paintSize').addEventListener('input', function (e) {
     e.target.nextElementSibling.textContent = e.target.value;
+  });
+  $('paintOpacity').addEventListener('input', function (e) {
+    paintOpacity = parseFloat(e.target.value);
+    e.target.nextElementSibling.textContent = paintOpacity.toFixed(2);
   });
 
   /* ============ colour wheel: a popover that closes on Escape or a click anywhere else ============ */
