@@ -686,10 +686,12 @@ button:disabled { cursor: var(--cur-arrow) !important; }
         <div class="chat-slot" id="chatSlotBelow"></div>
       </section>
 
+<!-- programming guide, hidden for now; restore this block (and the guide calls in init) when it's needed
   <section class="guide" aria-label="Programming guide">
     <h3>Programming <span id="guideNote">guide</span></h3>
     <table><tbody id="guideBody"></tbody></table>
   </section>
+-->
 
   <footer>© 2026 <a href="https://schwwaaa.net" target="_blank" rel="noopener">schwwaaa</a></footer>
 </main>
@@ -1892,6 +1894,7 @@ button:disabled { cursor: var(--cur-arrow) !important; }
   function renderGuide(state) {
     lastState = state;
     var body = $('guideBody');
+    if (!body) return; // the programming section is commented out
     var note = $('guideNote');
     var now = Date.now();
     var rows = guideData.map(function (item) {
@@ -1958,11 +1961,12 @@ button:disabled { cursor: var(--cur-arrow) !important; }
     syncLensUI();
     applyAll();
     $('feedName').textContent = CONFIG.feedName;
-    renderGuide('offline');
+    // programming guide calls are commented out with its section; restore with it
+    // renderGuide('offline');
     setState('searching');
     probe();
-    loadGuide();
-    setInterval(loadGuide, CONFIG.guideRefreshMs);
+    // loadGuide();
+    // setInterval(loadGuide, CONFIG.guideRefreshMs);
   }
 
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
